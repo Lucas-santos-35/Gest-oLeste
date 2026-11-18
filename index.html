@@ -513,6 +513,48 @@
     </div>
   </div>
 
+  <!-- MODAL: Cadastro / Edição de Eventos -->
+  <div id="modal-evento" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-cream-50 rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-cream-300">
+      <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
+        <h3 id="modal-evento-title" class="font-bold text-slate-900">Agendar Novo Evento</h3>
+        <button onclick="closeEventoModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <input type="hidden" id="evento-id">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Título do Evento</label>
+          <input type="text" id="evento-titulo" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" placeholder="Ex: Visita do Superintendente de Circuito">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Data</label>
+            <input type="date" id="evento-date" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Tipo</label>
+            <select id="evento-destaque" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+              <option value="true">Evento Especial</option>
+              <option value="false">Programação Regular</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Local</label>
+          <input type="text" id="evento-local" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" placeholder="Ex: Salão do Reino Leste">
+        </div>
+      </div>
+      <div class="px-6 py-3 border-t border-cream-200 bg-cream-100 flex justify-end gap-2">
+        <button onclick="closeEventoModal()" class="px-4 py-2 border border-cream-300 bg-white rounded-xl text-sm text-slate-700 hover:bg-cream-200/50">Cancelar</button>
+        <button onclick="saveEventoItem()" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white rounded-xl text-sm font-medium">Salvar Evento</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-4 right-4 z-[60] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
@@ -2298,26 +2340,124 @@
     function renderEventos() {
       mainContent.innerHTML = `
         <div class="space-y-6">
-          <div>
-            <p class="text-[11px] font-bold uppercase tracking-widest text-amber-800/80 mb-1">PROGRAMAÇÃO ESPECIAL</p>
-            <h2 class="font-serif text-3xl font-bold text-brand-900">Eventos e Visitas</h2>
-            <p class="text-sm text-slate-500 mt-1">Calendário de eventos especiais da congregação e circuito.</p>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-widest text-amber-800/80 mb-1">PROGRAMAÇÃO ESPECIAL</p>
+              <h2 class="font-serif text-3xl font-bold text-brand-900">Eventos e Visitas</h2>
+              <p class="text-sm text-slate-500 mt-1">Calendário de eventos especiais da congregação e circuito.</p>
+            </div>
+            <button onclick="openEventoModal()" class="self-start inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-800 hover:bg-brand-700 text-white text-sm font-semibold shadow-xs transition-colors">
+              <i data-lucide="calendar-plus" class="w-4 h-4"></i> Agendar Novo Evento
+            </button>
           </div>
 
-          <div class="space-y-3">
-            ${state.cong.eventos.map(ev => `
-              <div class="bg-cream-50 p-5 rounded-2xl border ${ev.destaque ? 'border-l-4 border-l-brand-800 border-cream-300' : 'border-cream-300'} shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <span class="text-xs font-bold text-brand-800 uppercase tracking-wider">${formatDateBR(ev.date)}</span>
-                  <h3 class="font-serif text-lg font-bold text-brand-900 mt-0.5">${ev.titulo}</h3>
-                  <p class="text-sm text-slate-500 mt-0.5">Local: ${ev.local}</p>
+          ${state.cong.eventos.length === 0 ? `
+            <div class="bg-white p-8 rounded-2xl border border-cream-300 text-center text-sm text-slate-500">
+              Nenhum evento agendado no momento. Clique em <strong>"Agendar Novo Evento"</strong> para adicionar.
+            </div>
+          ` : `
+            <div class="space-y-3">
+              ${state.cong.eventos.map(ev => `
+                <div class="bg-white p-5 rounded-2xl border ${ev.destaque ? 'border-l-4 border-l-brand-800 border-cream-300' : 'border-cream-300'} shadow-[0_2px_10px_rgba(36,53,44,0.025)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <span class="text-xs font-bold text-brand-800 uppercase tracking-wider">${formatDateBR(ev.date)}</span>
+                    <h3 class="font-serif text-lg font-bold text-brand-900 mt-0.5">${escapeHtml(ev.titulo)}</h3>
+                    <p class="text-sm text-slate-500 mt-0.5">Local: ${escapeHtml(ev.local)}</p>
+                  </div>
+                  <div class="flex items-center gap-2 self-start sm:self-center">
+                    ${ev.destaque ? `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-900 border border-brand-200">Evento Especial</span>` : ''}
+                    <button onclick="openEventoModal('${ev.id}')" class="p-2 rounded-xl text-slate-500 hover:text-brand-800 hover:bg-cream-200 transition-colors" title="Editar evento">
+                      <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="deleteEventoItem('${ev.id}')" class="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Remover evento">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                  </div>
                 </div>
-                ${ev.destaque ? `<span class="self-start sm:self-center px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-900 border border-brand-200">Evento Especial</span>` : ''}
-              </div>
-            `).join('')}
-          </div>
+              `).join('')}
+            </div>
+          `}
         </div>
       `;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function openEventoModal(id = null) {
+      const modal = document.getElementById('modal-evento');
+      const title = document.getElementById('modal-evento-title');
+
+      if (id) {
+        const item = state.cong.eventos.find(e => e.id === id);
+        if (!item) return;
+        title.textContent = 'Editar Evento';
+        document.getElementById('evento-id').value = item.id;
+        document.getElementById('evento-titulo').value = item.titulo;
+        document.getElementById('evento-date').value = item.date;
+        document.getElementById('evento-local').value = item.local;
+        document.getElementById('evento-destaque').value = String(!!item.destaque);
+      } else {
+        title.textContent = 'Agendar Novo Evento';
+        document.getElementById('evento-id').value = '';
+        document.getElementById('evento-titulo').value = '';
+        document.getElementById('evento-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('evento-local').value = 'Salão do Reino Leste';
+        document.getElementById('evento-destaque').value = 'true';
+      }
+
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeEventoModal() {
+      document.getElementById('modal-evento').classList.add('hidden');
+    }
+
+    function saveEventoItem() {
+      const id = document.getElementById('evento-id').value;
+      const titulo = document.getElementById('evento-titulo').value.trim();
+      const date = document.getElementById('evento-date').value;
+      const local = document.getElementById('evento-local').value.trim() || 'Salão do Reino Leste';
+      const destaque = document.getElementById('evento-destaque').value === 'true';
+
+      if (!titulo || !date) {
+        showToast('Informe o título e a data do evento.', 'warning');
+        return;
+      }
+
+      if (id) {
+        const idx = state.cong.eventos.findIndex(e => e.id === id);
+        if (idx !== -1) {
+          state.cong.eventos[idx] = { id, titulo, date, local, destaque };
+        }
+        showToast('Evento atualizado com sucesso!', 'success');
+      } else {
+        state.cong.eventos.push({
+          id: 'e_' + Date.now(),
+          titulo,
+          date,
+          local,
+          destaque
+        });
+        showToast('Novo evento agendado com sucesso!', 'success');
+      }
+
+      state.cong.eventos.sort((a, b) => a.date.localeCompare(b.date));
+      saveCongState();
+      closeEventoModal();
+      renderEventos();
+    }
+
+    function deleteEventoItem(id) {
+      showConfirmDialog(
+        'Remover Evento',
+        'Deseja realmente excluir este evento da programação?',
+        () => {
+          state.cong.eventos = state.cong.eventos.filter(e => e.id !== id);
+          saveCongState();
+          renderEventos();
+          showToast('Evento removido.', 'info');
+        }
+      );
     }
 
     // =========================================================================
