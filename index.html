@@ -6,6 +6,8 @@
   <meta name="theme-color" content="#24352c">
   <meta name="description" content="Congregação Leste - Painel de Organização">
   <title>Congregação Leste</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/854/854878.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -189,7 +191,6 @@
   </div>
 
   <!-- MODALS -->
-  <!-- MODAL: Configs e Backup -->
   <div id="modal-api-key" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-cream-50 rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-cream-300">
       <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
@@ -218,7 +219,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Senha de Acesso -->
   <div id="modal-auth" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-cream-50 rounded-2xl shadow-xl max-w-sm w-full overflow-hidden border border-cream-300 text-xs">
       <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
@@ -237,7 +237,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Cadastro de Irmão com Habilidades Personalizáveis -->
   <div id="modal-brother" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-cream-50 rounded-2xl shadow-xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] border border-cream-300 text-xs">
       <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
@@ -256,9 +255,7 @@
         </div>
         <div>
           <label class="block font-semibold uppercase text-slate-500 mb-1.5">Habilidades Habilitadas</label>
-          <div id="brother-skills-container" class="grid grid-cols-2 gap-2 bg-white border border-cream-300 rounded-xl p-3">
-            <!-- Gerado via JS -->
-          </div>
+          <div id="brother-skills-container" class="grid grid-cols-2 gap-2 bg-white border border-cream-300 rounded-xl p-3"></div>
           <div class="flex gap-2 mt-2">
             <input type="text" id="new-skill-input" placeholder="Nova habilidade (ex: Estudo de Livro)" class="flex-1 border border-cream-300 bg-white rounded-xl px-3 py-1.5 focus:outline-none">
             <button onclick="addNewCustomSkill()" type="button" class="px-3 py-1.5 bg-brand-800 text-white rounded-xl font-semibold cursor-pointer">+ Adicionar</button>
@@ -276,7 +273,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Fim de Semana (Adicionar/Editar) -->
   <div id="modal-fs" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-cream-50 rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-cream-300 text-xs">
       <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
@@ -317,7 +313,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Substituição Individual Escala Técnica -->
   <div id="modal-swap" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-cream-50 rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-cream-300 text-xs">
       <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
@@ -338,7 +333,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Editar Campo Sábado -->
   <div id="modal-campo-edit" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-cream-50 rounded-2xl shadow-xl max-w-sm w-full overflow-hidden border border-cream-300 text-xs">
       <div class="px-5 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
@@ -364,7 +358,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Editar Limpeza -->
   <div id="modal-limpeza-edit" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-cream-50 rounded-2xl shadow-xl max-w-sm w-full overflow-hidden border border-cream-300 text-xs">
       <div class="px-5 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
@@ -398,7 +391,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Agendar / Editar Evento -->
   <div id="modal-evento" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-cream-50 rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-cream-300 text-xs">
       <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
@@ -864,7 +856,7 @@
       doc.save("designacoes-tecnicas.pdf");
     }
 
-    // REUNIÃO DE FIM DE SEMANA (Funcional com edição, adição e envio de mensagem de texto WhatsApp)
+    // REUNIÃO DE FIM DE SEMANA
     function renderFimDeSemana(container) {
       container.innerHTML = `
         <div class="space-y-4 max-w-4xl mx-auto">
@@ -974,7 +966,7 @@
       window.open(url, '_blank');
     }
 
-    // IRMÃOS (Com gerenciamento de habilidades customizadas)
+    // IRMÃOS
     function renderIrmaos(container) {
       container.innerHTML = `
         <div class="space-y-4 max-w-5xl mx-auto">
@@ -1071,7 +1063,6 @@
       input.value = '';
       saveState();
       
-      // Re-render current brother modal skills container
       const currentBroId = document.getElementById('brother-id').value;
       let broHab = {};
       if (currentBroId) {
@@ -1137,7 +1128,7 @@
       });
     }
 
-    // CAMPO SÁBADO (Com botão PDF)
+    // CAMPO SÁBADO
     function renderCampo(container) {
       const count = Number(state.campoMonthsCount || 1);
       container.innerHTML = `
@@ -1201,7 +1192,7 @@
           const curY = year + Math.floor((startMonth + m) / 12);
           const date = new Date(curY, curM, 1, 12, 0, 0);
           while (date.getMonth() === curM) {
-            if (date.getDay() === 6) { // Sábados
+            if (date.getDay() === 6) {
               const yyyy = date.getFullYear();
               const mm = String(date.getMonth() + 1).padStart(2, '0');
               const dd = String(date.getDate()).padStart(2, '0');
@@ -1437,7 +1428,7 @@
           
           const date = new Date(currentY, currentM, 1, 12, 0, 0);
           while (date.getMonth() === currentM) {
-            if (date.getDay() === 1) { // Segundas-feiras
+            if (date.getDay() === 1) {
               const yyyy = date.getFullYear();
               const mm = String(date.getMonth() + 1).padStart(2, '0');
               const dd = String(date.getDate()).padStart(2, '0');
@@ -1757,6 +1748,13 @@
         }
       };
       reader.readAsText(file);
+    }
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed: ', err));
+      });
     }
 
     window.onload = function() {
