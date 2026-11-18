@@ -1,0 +1,2380 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#24352c">
+  <meta name="description" content="Gestão Congregação Leste - Painel de Organização">
+  <title>Gestão Congregação Leste</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- jsPDF & AutoTable para download direto de PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- Google Fonts: Inter & Lora (Editorial Serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Lora', 'Georgia', 'serif'],
+          },
+          colors: {
+            brand: {
+              950: '#19261f',
+              900: '#1f2e26',
+              800: '#24352c',
+              700: '#2f4539',
+              600: '#3d594a',
+              200: '#d7dfd9',
+              100: '#e9eee9',
+              50: '#f3f6f4',
+            },
+            cream: {
+              50: '#faf9f6',
+              100: '#f6f4ef',
+              200: '#efeae1',
+              300: '#e2dcd0',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    dialog::backdrop {
+      background: rgba(25, 38, 31, 0.55);
+      backdrop-filter: blur(4px);
+    }
+    dialog[open] {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97) translateY(-6px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .toast-enter {
+      animation: slideInRight 0.25s ease-out forwards;
+    }
+    .nav-item.active {
+      background-color: #e9eee9;
+      color: #1f2e26;
+      font-weight: 600;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f6f4ef;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #d7dfd9;
+      border-radius: 4px;
+    }
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 8mm;
+      }
+      .no-print, header, aside, footer {
+        display: none !important;
+      }
+      body {
+        background: white !important;
+        color: #000 !important;
+        font-size: 10pt;
+      }
+      #schedule-container {
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        width: 100% !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      th, td {
+        border: 1px solid #94a3b8 !important;
+        padding: 6px 8px !important;
+        font-size: 9.5pt !important;
+      }
+      thead th {
+        background-color: #f1f5f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body class="bg-cream-100 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- Top Header -->
+  <header class="bg-brand-800 text-white sticky top-0 z-30 no-print border-b border-brand-900">
+    <div class="w-full px-4 sm:px-7 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <button id="mobileMenuBtn" class="lg:hidden p-2 rounded-lg text-brand-100 hover:bg-brand-700 focus:outline-none" aria-label="Abrir menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <div class="w-10 h-10 rounded-xl bg-brand-700/80 border border-amber-200/35 flex items-center justify-center font-serif font-bold text-lg text-amber-100 tracking-tight" aria-hidden="true">
+          GL
+        </div>
+        <div>
+          <p class="text-[10px] uppercase tracking-[0.16em] text-amber-200/80 font-semibold leading-none mb-1">PAINEL DE ORGANIZAÇÃO</p>
+          <h1 class="font-serif text-lg sm:text-xl font-bold tracking-tight leading-tight text-white">Gestão Congregação Leste</h1>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-medium bg-brand-900/50 text-brand-100 border border-brand-600/80" id="connectionStatus">
+          Demonstração local
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="mobileOverlay" class="fixed inset-0 bg-brand-950/40 z-30 hidden lg:hidden backdrop-blur-xs transition-opacity no-print"></div>
+
+  <!-- Full-Height Clean Shell -->
+  <div class="flex-1 w-full flex flex-col lg:flex-row">
+    <!-- Docked Left Sidebar Navigation -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-cream-50 border-r border-cream-300/90 px-4 py-6 transform -translate-x-full transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 lg:w-64 lg:shrink-0 flex flex-col justify-between no-print">
+      <div>
+        <div class="flex items-center justify-between lg:hidden pb-4 mb-4 border-b border-cream-200">
+          <span class="font-bold text-brand-800 text-sm">Menu Principal</span>
+          <button id="closeSidebarBtn" class="p-1.5 rounded-lg text-slate-400 hover:bg-cream-200">✕</button>
+        </div>
+
+        <p class="px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-3">MENU PRINCIPAL</p>
+        <nav class="space-y-1">
+          <button class="nav-item active w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-slate-600 hover:bg-cream-200/60 transition-all text-left" data-view="dashboard">
+            <span class="text-sm w-4 text-center text-brand-800 opacity-80">▦</span> <span>Painel</span>
+          </button>
+          <button class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-slate-600 hover:bg-cream-200/60 transition-all text-left" data-view="designacoes">
+            <span class="text-sm w-4 text-center text-brand-800 opacity-80">▤</span> <span>Designações técnicas</span>
+          </button>
+          <button class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-slate-600 hover:bg-cream-200/60 transition-all text-left" data-view="irmaos">
+            <span class="text-sm w-4 text-center text-brand-800 opacity-80">♙</span> <span>Irmãos</span>
+          </button>
+          <button class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-slate-600 hover:bg-cream-200/60 transition-all text-left" data-view="assistencias">
+            <span class="text-sm w-4 text-center text-brand-800 opacity-80">▥</span> <span>Assistências</span>
+          </button>
+          <button class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-slate-600 hover:bg-cream-200/60 transition-all text-left" data-view="limpeza">
+            <span class="text-sm w-4 text-center text-brand-800 opacity-80">⌂</span> <span>Limpeza</span>
+          </button>
+          <button class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-slate-600 hover:bg-cream-200/60 transition-all text-left" data-view="audio">
+            <span class="text-sm w-4 text-center text-brand-800 opacity-80">♫</span> <span>Áudio e vídeo</span>
+          </button>
+          <button class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-slate-600 hover:bg-cream-200/60 transition-all text-left" data-view="eventos">
+            <span class="text-sm w-4 text-center text-brand-800 opacity-80">▣</span> <span>Eventos</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="mt-8 bg-cream-200/75 border border-cream-300/80 rounded-2xl p-4 text-brand-900">
+        <strong class="block text-xs font-bold text-brand-900 mb-1">Gestão organizada</strong>
+        <small class="block text-[11.5px] text-slate-500 leading-relaxed">Protótipo para avaliação. Os dados deste exemplo ficam neste navegador.</small>
+        <button id="resetDemoBtn" class="mt-3 w-full py-1.5 px-2.5 bg-white hover:bg-cream-50 text-brand-800 border border-cream-300 rounded-lg text-[11px] font-medium transition-colors">
+          Restaurar dados iniciais
+        </button>
+      </div>
+    </aside>
+
+    <!-- Dynamic Main Content Area -->
+    <div class="flex-1 min-w-0 flex flex-col justify-between">
+      <main id="mainContent" class="flex-1 max-w-6xl w-full mx-auto px-5 sm:px-10 lg:px-12 py-8 sm:py-10 focus:outline-none" tabindex="-1"></main>
+
+      <!-- Footer -->
+      <footer class="py-5 px-6 text-center text-[11.5px] text-slate-400 no-print">
+        Gestão Congregação Leste · Versão de avaliação
+      </footer>
+    </div>
+  </div>
+
+  <!-- MODAL: Configurações, Senha e Backup -->
+  <div id="modal-api-key" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-cream-50 rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-cream-300">
+      <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
+        <h3 class="font-bold text-brand-900 flex items-center gap-2">
+          <i data-lucide="settings" class="w-4 h-4 text-brand-700"></i> Configurações e Backup
+        </h3>
+        <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Senha do Responsável (Padrão: 1234)</label>
+          <input type="password" id="user-admin-password" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" placeholder="••••••••">
+        </div>
+        <div class="border-t border-cream-200 pt-4">
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-2">Backup dos Dados</label>
+          <div class="flex gap-2">
+            <button onclick="exportBackup()" class="flex-1 py-2 px-3 bg-cream-200 hover:bg-cream-300 text-brand-900 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar JSON
+            </button>
+            <label class="flex-1 py-2 px-3 bg-cream-200 hover:bg-cream-300 text-brand-900 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar JSON
+              <input type="file" accept=".json" onchange="importBackup(event)" class="hidden">
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 py-3 border-t border-cream-200 bg-cream-100 flex justify-end gap-2">
+        <button onclick="closeApiKeyModal()" class="px-4 py-2 border border-cream-300 bg-white rounded-xl text-sm text-slate-700 hover:bg-cream-200/50">Cancelar</button>
+        <button onclick="saveApiKey()" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white rounded-xl text-sm font-medium">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Confirmação Personalizada -->
+  <div id="modal-confirm" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-[55] flex items-center justify-center hidden p-4">
+    <div class="bg-cream-50 rounded-2xl shadow-xl max-w-sm w-full overflow-hidden border border-cream-300">
+      <div class="p-6 space-y-3">
+        <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <h3 class="font-bold text-slate-900 text-base" id="confirm-title">Confirmar Ação</h3>
+        <p id="confirm-message" class="text-xs text-slate-600 leading-relaxed"></p>
+      </div>
+      <div class="px-6 py-3 border-t border-cream-200 bg-cream-100 flex justify-end gap-2">
+        <button onclick="closeConfirmModal()" class="px-4 py-2 border border-cream-300 bg-white rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-200/50">Cancelar</button>
+        <button id="confirm-accept-btn" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Validação de Senha do Responsável -->
+  <div id="modal-auth" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-cream-50 rounded-2xl shadow-xl max-w-sm w-full overflow-hidden border border-cream-300">
+      <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
+        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600"></i> Senha do Responsável
+        </h3>
+        <button onclick="closeAuthModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <p class="text-xs text-slate-600 leading-relaxed">Digite a senha do responsável para liberar edições (padrão: <strong>1234</strong>).</p>
+        <div>
+          <input type="password" id="input-admin-password" onkeydown="if(event.key==='Enter') verifyAdminPassword()" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" placeholder="••••••••">
+          <p id="auth-error-msg" class="text-xs text-rose-600 mt-1.5 hidden font-medium">Senha incorreta. Tente novamente.</p>
+        </div>
+      </div>
+      <div class="px-6 py-3 border-t border-cream-200 bg-cream-100 flex justify-end gap-2">
+        <button onclick="closeAuthModal()" class="px-4 py-2 border border-cream-300 bg-white rounded-xl text-sm text-slate-700 hover:bg-cream-200/50">Cancelar</button>
+        <button onclick="verifyAdminPassword()" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white rounded-xl text-sm font-medium">Liberar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Envio de Mensagens via WhatsApp -->
+  <div id="modal-whatsapp" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 no-print">
+    <div class="bg-cream-50 rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh] border border-cream-300">
+      <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
+        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="message-square" class="w-5 h-5 text-emerald-700"></i> Comunicados para WhatsApp
+        </h3>
+        <button onclick="closeWhatsAppModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="border-b border-cream-200 bg-cream-100/70 px-6 pt-3 flex gap-4 text-xs font-semibold">
+        <button onclick="switchWaTab('group')" id="wa-tab-group" class="pb-2 border-b-2 border-brand-800 text-brand-900 font-bold flex items-center gap-1.5">
+          <i data-lucide="users" class="w-4 h-4"></i> Aviso do Grupo
+        </button>
+        <button onclick="switchWaTab('individual')" id="wa-tab-individual" class="pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5">
+          <i data-lucide="user-check" class="w-4 h-4"></i> Lembrete Individual
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4">
+        <div id="wa-content-group" class="space-y-4">
+          <textarea id="wa-group-text" class="w-full h-60 font-mono text-xs p-3 border border-cream-300 rounded-xl bg-white focus:ring-2 focus:ring-brand-700 focus:outline-none"></textarea>
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <button onclick="copyWaGroupText()" class="px-4 py-2 bg-cream-200 hover:bg-cream-300 text-brand-900 text-xs font-semibold rounded-xl flex items-center gap-2">
+              <i data-lucide="copy" class="w-4 h-4"></i> Copiar Texto
+            </button>
+            <button onclick="sendWaGroupMessage()" class="px-5 py-2 bg-brand-800 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow flex items-center gap-2">
+              <i data-lucide="send" class="w-4 h-4"></i> Abrir WhatsApp
+            </button>
+          </div>
+        </div>
+
+        <div id="wa-content-individual" class="hidden space-y-4">
+          <div id="wa-individual-list" class="divide-y divide-cream-200 border border-cream-300 rounded-xl max-h-72 overflow-y-auto bg-white">
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-3 border-t border-cream-200 bg-cream-100 flex justify-end">
+        <button onclick="closeWhatsAppModal()" class="px-4 py-2 border border-cream-300 bg-white text-slate-700 hover:bg-cream-200/50 rounded-xl text-xs font-semibold">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Estatísticas -->
+  <div id="modal-stats" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-cream-50 rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[85vh] border border-cream-300">
+      <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
+        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="bar-chart-2" class="w-5 h-5 text-brand-700"></i> Estatísticas e Distribuição do Mês
+        </h3>
+        <button onclick="closeStatsModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto">
+        <div id="stats-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        </div>
+      </div>
+      <div class="px-6 py-3 border-t border-cream-200 bg-cream-100 flex justify-end">
+        <button onclick="closeStatsModal()" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Substituição Individual -->
+  <div id="modal-swap" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-cream-50 rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-cream-300">
+      <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
+        <h3 class="font-bold text-slate-900">Alterar Designação</h3>
+        <button onclick="closeSwapModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <p id="swap-subtitle" class="text-xs text-brand-900 font-semibold bg-brand-50 p-2.5 rounded-xl border border-brand-200"></p>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Selecione o Substituto</label>
+          <select id="swap-select" class="w-full bg-white border border-cream-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+          </select>
+        </div>
+      </div>
+      <div class="px-6 py-3 border-t border-cream-200 bg-cream-100 flex justify-end gap-2">
+        <button onclick="closeSwapModal()" class="px-4 py-2 border border-cream-300 bg-white rounded-xl text-sm text-slate-700 hover:bg-cream-200/50">Cancelar</button>
+        <button onclick="confirmSwap()" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white rounded-xl text-sm font-medium">Salvar Alteração</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Cadastro de Irmão -->
+  <div id="modal-brother" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-cream-50 rounded-2xl shadow-xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] border border-cream-300">
+      <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
+        <h3 id="modal-brother-title" class="font-bold text-slate-900">Cadastrar Irmão</h3>
+        <button onclick="closeBrotherModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-4">
+        <input type="hidden" id="brother-id">
+        
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nome Completo</label>
+          <input type="text" id="brother-name" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" placeholder="Ex: João Silva">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">WhatsApp / Telefone (com DDD)</label>
+          <input type="tel" id="brother-phone" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" placeholder="Ex: 31999998888">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Funções Habilitadas</label>
+          <div id="brother-roles-checkboxes" class="grid grid-cols-2 gap-2 p-3 bg-white rounded-xl border border-cream-300 max-h-40 overflow-y-auto">
+          </div>
+        </div>
+
+        <!-- Configuração de Escala 12x36 -->
+        <div class="bg-amber-50/80 border border-amber-200 rounded-xl p-3 space-y-2.5">
+          <label class="inline-flex items-center text-xs font-bold text-amber-900 cursor-pointer">
+            <input type="checkbox" id="brother-shift-enabled" onchange="toggleShiftFields()" class="rounded text-brand-800 focus:ring-brand-700">
+            <span class="ml-2">Trabalha em Escala 12x36 (Bloqueia dias de plantão)</span>
+          </label>
+          <div id="brother-shift-fields" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Data de um Plantão (Base)</label>
+              <input type="date" id="brother-shift-ref" class="w-full border border-cream-300 bg-white rounded-xl px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-brand-700 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Escopo do Bloqueio</label>
+              <select id="brother-shift-scope" class="w-full border border-cream-300 bg-white rounded-xl px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                <option value="audio">Apenas Som / Áudio</option>
+                <option value="all">Todas as funções</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Observações Gerais</label>
+          <input type="text" id="brother-restrictions" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" placeholder="Ex: Viaja nas quintas, habilitado para som, etc.">
+        </div>
+      </div>
+      <div class="px-6 py-3 border-t border-cream-200 bg-cream-100 flex justify-end gap-2">
+        <button onclick="closeBrotherModal()" class="px-4 py-2 border border-cream-300 bg-white rounded-xl text-sm text-slate-700 hover:bg-cream-200/50">Cancelar</button>
+        <button onclick="saveBrother()" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white rounded-xl text-sm font-medium">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Cadastro de Função -->
+  <div id="modal-role" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-cream-50 rounded-2xl shadow-xl max-w-sm w-full overflow-hidden border border-cream-300">
+      <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
+        <h3 id="modal-role-title" class="font-bold text-slate-900">Nova Função</h3>
+        <button onclick="closeRoleModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <input type="hidden" id="role-id">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nome da Função</label>
+          <input type="text" id="role-name" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" placeholder="Ex: MULTIMÍDIA">
+        </div>
+      </div>
+      <div class="px-6 py-3 border-t border-cream-200 bg-cream-100 flex justify-end gap-2">
+        <button onclick="closeRoleModal()" class="px-4 py-2 border border-cream-300 bg-white rounded-xl text-sm text-slate-700 hover:bg-cream-200/50">Cancelar</button>
+        <button onclick="saveRole()" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white rounded-xl text-sm font-medium">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Cadastro / Edição de Escala de Limpeza -->
+  <div id="modal-limpeza" class="fixed inset-0 bg-brand-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-cream-50 rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-cream-300">
+      <div class="px-6 py-4 border-b border-cream-200 flex justify-between items-center bg-cream-100">
+        <h3 id="modal-limpeza-title" class="font-bold text-slate-900">Editar Escala de Limpeza</h3>
+        <button onclick="closeLimpezaModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <input type="hidden" id="limpeza-id">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Data</label>
+            <input type="date" id="limpeza-date" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Grupo Designado</label>
+            <select id="limpeza-grupo" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+              <option value="Salão do Reino">Salão do Reino</option>
+              <option value="Alto Paraíso">Alto Paraíso</option>
+              <option value="Paraíso">Paraíso</option>
+              <option value="Santa Efigênia">Santa Efigênia</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Responsável / Dirigente</label>
+          <input type="text" id="limpeza-responsavel" list="brothers-datalist" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" placeholder="Nome do irmão responsável">
+          <datalist id="brothers-datalist"></datalist>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Observações / Áreas</label>
+          <input type="text" id="limpeza-obs" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" placeholder="Ex: Salão principal, sanitários e área externa">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Status</label>
+          <select id="limpeza-status" class="w-full border border-cream-300 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+            <option value="false">Aguardando realização</option>
+            <option value="true">Limpeza concluída</option>
+          </select>
+        </div>
+      </div>
+      <div class="px-6 py-3 border-t border-cream-200 bg-cream-100 flex justify-end gap-2">
+        <button onclick="closeLimpezaModal()" class="px-4 py-2 border border-cream-300 bg-white rounded-xl text-sm text-slate-700 hover:bg-cream-200/50">Cancelar</button>
+        <button onclick="saveLimpezaItem()" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white rounded-xl text-sm font-medium">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-[60] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <script>
+    // =========================================================================
+    // ESTADO GLOBAL E PERSISTÊNCIA
+    // =========================================================================
+    const STORAGE_KEYS = {
+      ROLES: 'gcl_roles_v4',
+      BROTHERS: 'gcl_brothers_v4',
+      SCHEDULE: 'gcl_schedule_v4',
+      CONG: 'gcl_cong_data_v4',
+      ADMIN_PASS: 'gcl_admin_password'
+    };
+
+    const DEFAULT_CONG_DATA = {
+      assistencias: [
+        { id: 'a1', date: '2026-11-15', tipo: 'Fim de Semana', presencial: 112, zoom: 18 },
+        { id: 'a2', date: '2026-11-11', tipo: 'Meio de Semana', presencial: 94, zoom: 22 },
+        { id: 'a3', date: '2026-11-08', tipo: 'Fim de Semana', presencial: 118, zoom: 14 },
+        { id: 'a4', date: '2026-11-04', tipo: 'Meio de Semana', presencial: 89, zoom: 25 }
+      ],
+      limpeza: [
+        { id: 'l1', date: '2026-11-21', grupo: 'Salão do Reino', responsavel: 'Gilmar Sales', obs: 'Salão principal, sanitários e hall de entrada', concluido: false },
+        { id: 'l2', date: '2026-11-28', grupo: 'Alto Paraíso', responsavel: 'Abílio Brito', obs: 'Auditório, vidros externos e área externa', concluido: false },
+        { id: 'l3', date: '2026-12-05', grupo: 'Paraíso', responsavel: 'Heldes Luiz', obs: 'Salão principal, sala B e sanitários', concluido: false },
+        { id: 'l4', date: '2026-12-12', grupo: 'Santa Efigênia', responsavel: 'Eurípedes Fortunato', obs: 'Limpeza completa pós-reunião de fim de semana', concluido: false }
+      ],
+      eventos: [
+        { id: 'e1', date: '2026-11-24', titulo: 'Visita do Superintendente de Circuito', local: 'Salão do Reino Leste', destaque: true },
+        { id: 'e2', date: '2026-12-06', titulo: 'Assembleia de Circuito com Representante de Betel', local: 'Salão de Assembleias', destaque: true },
+        { id: 'e3', date: '2026-12-20', titulo: 'Discurso Especial de Fim de Ano', local: 'Salão do Reino Leste', destaque: false }
+      ]
+    };
+
+    function getDefaultBrothersList() {
+      const names = [
+        "Abílio Brito", "Antônio José Ribeiro", "Eurípedes Fortunato",
+        "Fillipe Tito", "Gilmar Sales", "Heldes Luiz", "João Victor",
+        "Leonardo Vieira", "Lucas Alves", "Lucas Daniel", "Lucas Eduardo",
+        "Luiz Eduardo", "Márcio Barbosa", "Marco Antônio", "Maurício Batista",
+        "Naico Stéfano", "Paulo César Guedes", "Ricardo Gomes",
+        "Ronnie Rodrigues", "Valdemar Junio", "Vinícius Adriano", "Wátila Fernandes"
+      ];
+      const audioNames = ["Wátila Fernandes", "Lucas Alves", "Lucas Daniel", "Ronnie Rodrigues", "Vinícius Adriano"];
+
+      return names.map((name, idx) => {
+        const isAudio = audioNames.includes(name);
+        const isLucasDaniel = name === "Lucas Daniel";
+        return {
+          id: 'b_init_' + (idx + 1),
+          name,
+          phone: '',
+          roles: isAudio ? ['r1', 'r2', 'r3', 'r4', 'r5'] : ['r1', 'r2', 'r3', 'r4'],
+          restrictions: isLucasDaniel ? 'Escala 12x36 - Som apenas nas folgas' : (isAudio ? 'Habilitado para Som / Áudio' : ''),
+          shift12x36: isLucasDaniel,
+          shiftRefDate: '2026-11-18',
+          shiftScope: 'audio'
+        };
+      });
+    }
+
+    let state = {
+      roles: [
+        { id: 'r1', name: 'INDICADOR ENTRADA' },
+        { id: 'r2', name: 'INDICADOR SALÃO' },
+        { id: 'r3', name: 'MICROFONE 1' },
+        { id: 'r4', name: 'MICROFONE 2' },
+        { id: 'r5', name: 'SOM / ÁUDIO' }
+      ],
+      brothers: [],
+      schedule: null,
+      cong: JSON.parse(JSON.stringify(DEFAULT_CONG_DATA)),
+      adminPassword: localStorage.getItem(STORAGE_KEYS.ADMIN_PASS) || '1234',
+      isUnlocked: false
+    };
+
+    let currentView = 'dashboard';
+    let currentDesigSubTab = 'schedule';
+    let currentSwapTarget = null;
+    let pendingAdminAction = null;
+
+    function persistState() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.ROLES, JSON.stringify(state.roles));
+        localStorage.setItem(STORAGE_KEYS.BROTHERS, JSON.stringify(state.brothers));
+        if (state.schedule) {
+          const serializable = {
+            ...state.schedule,
+            dates: state.schedule.dates.map(d => d.toISOString())
+          };
+          localStorage.setItem(STORAGE_KEYS.SCHEDULE, JSON.stringify(serializable));
+        }
+      } catch (e) {
+        console.error('Erro ao salvar estado:', e);
+      }
+    }
+
+    function saveCongState() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.CONG, JSON.stringify(state.cong));
+      } catch (e) {
+        console.error('Erro ao salvar dados da congregação:', e);
+      }
+    }
+
+    function loadPersistedState() {
+      try {
+        const savedRoles = localStorage.getItem(STORAGE_KEYS.ROLES);
+        const savedBrothers = localStorage.getItem(STORAGE_KEYS.BROTHERS);
+        const savedSchedule = localStorage.getItem(STORAGE_KEYS.SCHEDULE);
+        const savedCong = localStorage.getItem(STORAGE_KEYS.CONG);
+
+        if (savedRoles) state.roles = JSON.parse(savedRoles);
+        if (savedBrothers) {
+          state.brothers = JSON.parse(savedBrothers);
+        } else {
+          state.brothers = getDefaultBrothersList();
+          persistState();
+        }
+
+        if (savedSchedule) {
+          const parsed = JSON.parse(savedSchedule);
+          parsed.dates = parsed.dates.map(iso => new Date(iso));
+          state.schedule = parsed;
+        }
+
+        if (savedCong) {
+          state.cong = JSON.parse(savedCong);
+        }
+      } catch (e) {
+        state.brothers = getDefaultBrothersList();
+        state.cong = JSON.parse(JSON.stringify(DEFAULT_CONG_DATA));
+      }
+    }
+
+    // =========================================================================
+    // UTILITÁRIOS (DATAS, ESCAPE, TOAST E CONFIRMAÇÃO)
+    // =========================================================================
+    function formatDateBR(isoStr) {
+      if (!isoStr) return '-';
+      const parts = isoStr.split('-');
+      if (parts.length !== 3) return isoStr;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const colors = {
+        success: 'bg-brand-800 text-white border-brand-900',
+        error: 'bg-rose-700 text-white border-rose-800',
+        warning: 'bg-amber-600 text-white border-amber-700',
+        info: 'bg-slate-800 text-white border-slate-900'
+      };
+
+      const toast = document.createElement('div');
+      toast.className = `toast-enter pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs font-medium ${colors[type] || colors.info}`;
+      toast.innerHTML = `<span class="flex-1">${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.25s ease-in';
+        setTimeout(() => toast.remove(), 250);
+      }, 3200);
+    }
+
+    function showConfirmDialog(title, message, onConfirm) {
+      const modal = document.getElementById('modal-confirm');
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = message;
+
+      const acceptBtn = document.getElementById('confirm-accept-btn');
+      const newBtn = acceptBtn.cloneNode(true);
+      acceptBtn.parentNode.replaceChild(newBtn, acceptBtn);
+
+      newBtn.addEventListener('click', () => {
+        closeConfirmModal();
+        if (typeof onConfirm === 'function') onConfirm();
+      });
+
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('modal-confirm').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // ROTEADOR DE ABAS PRINCIPAIS
+    // =========================================================================
+    const mainContent = document.getElementById('mainContent');
+
+    function renderView(view) {
+      currentView = view;
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+
+      if (view === 'dashboard') renderDashboard();
+      else if (view === 'designacoes') {
+        currentDesigSubTab = 'schedule';
+        renderDesignacoesSection();
+      } else if (view === 'irmaos') {
+        currentDesigSubTab = 'brothers';
+        renderDesignacoesSection();
+      } else if (view === 'assistencias') renderAssistencias();
+      else if (view === 'limpeza') renderLimpeza();
+      else if (view === 'audio') renderAudioVideo();
+      else if (view === 'eventos') renderEventos();
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // =========================================================================
+    // 1. PAINEL PRINCIPAL (DASHBOARD)
+    // =========================================================================
+    function renderDashboard() {
+      const upcomingDates = state.schedule ? state.schedule.dates.slice(0, 5) : [];
+      const totalReunioes = state.schedule ? state.schedule.dates.length : 0;
+
+      mainContent.innerHTML = `
+        <div class="space-y-6">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-amber-800/80 mb-1">VISÃO GERAL</p>
+            <h2 class="font-serif text-3xl sm:text-4xl font-bold text-brand-900 tracking-tight">Painel principal</h2>
+            <p class="text-sm text-slate-500 mt-1.5">Bem-vindo ao Gestão Congregação Leste.</p>
+          </div>
+
+          <div class="bg-[#f6efe2] border border-[#e7dcc6] rounded-2xl px-5 py-3.5 text-xs text-amber-950/90 leading-relaxed">
+            <strong class="font-semibold">Modo de avaliação:</strong> as alterações feitas nesta versão ficam salvas apenas neste navegador. Para compartilhar dados entre usuários, será necessário conectar o Supabase e configurar autenticação e permissões.
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-6 rounded-2xl border border-cream-300/80 shadow-[0_2px_10px_rgba(36,53,44,0.025)]">
+              <span class="text-xs font-medium text-slate-500">Designações cadastradas</span>
+              <p class="font-serif text-3xl font-bold text-brand-900 mt-4">${totalReunioes}</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-cream-300/80 shadow-[0_2px_10px_rgba(36,53,44,0.025)]">
+              <span class="text-xs font-medium text-slate-500">Módulos disponíveis</span>
+              <p class="font-serif text-3xl font-bold text-brand-900 mt-4">7</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-cream-300/80 shadow-[0_2px_10px_rgba(36,53,44,0.025)]">
+              <span class="text-xs font-medium text-slate-500">Armazenamento</span>
+              <p class="font-serif text-3xl font-bold text-brand-900 mt-4">Local</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-cream-300/80 shadow-[0_2px_10px_rgba(36,53,44,0.025)]">
+              <span class="text-xs font-medium text-slate-500">Sincronização</span>
+              <p class="font-serif text-3xl font-bold text-brand-900 mt-4">—</p>
+            </div>
+          </div>
+
+          <!-- Próximas Designações -->
+          <div class="bg-white rounded-2xl border border-cream-300/80 shadow-[0_2px_10px_rgba(36,53,44,0.025)] p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-serif text-lg font-bold text-brand-900">Próximas designações cadastradas</h3>
+              <button onclick="renderView('designacoes')" class="text-xs font-medium text-slate-500 hover:text-brand-800 transition-colors">
+                Ver escala completa →
+              </button>
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-cream-200/80">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-cream-200/60 border-b border-cream-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <th class="py-3.5 px-5">DATA</th>
+                    <th class="py-3.5 px-5">INDICADOR ENTRADA</th>
+                    <th class="py-3.5 px-5">INDICADOR SALÃO</th>
+                    <th class="py-3.5 px-5">MICROFONE 1</th>
+                    <th class="py-3.5 px-5">MICROFONE 2</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-cream-200/70 text-[13.5px]">
+                  ${upcomingDates.length === 0 ? `
+                    <tr><td colspan="5" class="py-8 text-center text-slate-400">Nenhuma escala gerada ainda.</td></tr>
+                  ` : upcomingDates.map(d => {
+                    const dateKey = d.toISOString().split('T')[0];
+                    const getName = (rId) => {
+                      const bId = state.schedule.grid[dateKey]?.[rId];
+                      const b = state.brothers.find(item => item.id === bId);
+                      return b ? escapeHtml(b.name) : '<span class="text-slate-400">Vago</span>';
+                    };
+                    return `
+                      <tr class="hover:bg-cream-100/50 transition-colors">
+                        <td class="py-3.5 px-5 text-slate-700">${formatDateBR(dateKey)}</td>
+                        <td class="py-3.5 px-5 text-slate-700">${getName('r1')}</td>
+                        <td class="py-3.5 px-5 text-slate-700">${getName('r2')}</td>
+                        <td class="py-3.5 px-5 text-slate-700">${getName('r3')}</td>
+                        <td class="py-3.5 px-5 text-slate-700">${getName('r4')}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Cards inferiores -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white p-6 rounded-2xl border border-cream-300/80 shadow-[0_2px_10px_rgba(36,53,44,0.025)]">
+              <h4 class="font-bold text-sm text-brand-900 mb-1.5">Cadastro e edição</h4>
+              <p class="text-xs text-slate-500 leading-relaxed">Inclua, edite e exclua designações técnicas para testar o fluxo.</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-cream-300/80 shadow-[0_2px_10px_rgba(36,53,44,0.025)]">
+              <h4 class="font-bold text-sm text-brand-900 mb-1.5">Instalação como aplicativo</h4>
+              <p class="text-xs text-slate-500 leading-relaxed">O manifest e o service worker preparam o projeto para instalação como PWA em hospedagem HTTPS.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 2. DESIGNAÇÕES TÉCNICAS, IRMÃOS E FUNÇÕES
+    // =========================================================================
+    function isBrotherAvailableOnDate(brother, dateObj, roleId) {
+      if (!brother || !Array.isArray(brother.roles) || !brother.roles.includes(roleId)) {
+        return false;
+      }
+      if (brother.shift12x36 && brother.shiftRefDate) {
+        const appliesToRole = brother.shiftScope === 'all' || (brother.shiftScope === 'audio' && roleId === 'r5');
+        if (appliesToRole) {
+          const [refY, refM, refD] = brother.shiftRefDate.split('-').map(Number);
+          const refDate = new Date(refY, refM - 1, refD);
+          const curDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+          const diffTime = curDate.getTime() - refDate.getTime();
+          const diffDays = Math.round(diffTime / (1000 * 3600 * 24));
+          if (Math.abs(diffDays) % 2 === 0) return false;
+        }
+      }
+      return true;
+    }
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function renderDesignacoesSection() {
+      const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      const selMonth = state.schedule ? state.schedule.month : new Date().getMonth();
+      const selYear = state.schedule ? state.schedule.year : new Date().getFullYear();
+
+      mainContent.innerHTML = `
+        <div class="space-y-6">
+          <!-- Sub-Header Designações -->
+          <div class="bg-brand-800 text-white rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 bg-brand-700 rounded-xl border border-brand-600">
+                <i data-lucide="calendar" class="w-5 h-5 text-amber-200"></i>
+              </div>
+              <div>
+                <h2 class="font-serif text-lg sm:text-xl font-bold leading-tight">Designações Técnicas</h2>
+                <p class="text-xs text-brand-200">Organização de Reuniões e Escala Automática</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button onclick="toggleAdminLock()" id="admin-status-btn" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all">
+                <i id="admin-lock-icon" data-lucide="${state.isUnlocked ? 'unlock' : 'lock'}" class="w-3.5 h-3.5"></i>
+                <span id="admin-status-text">${state.isUnlocked ? 'Liberado' : 'Restrito'}</span>
+              </button>
+
+              <button onclick="switchDesigSubTab('schedule')" class="px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${currentDesigSubTab === 'schedule' ? 'bg-cream-50 text-brand-900 shadow-xs' : 'text-brand-100 hover:bg-brand-700'}">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i> Designações
+              </button>
+              <button onclick="switchDesigSubTab('brothers')" class="px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${currentDesigSubTab === 'brothers' ? 'bg-cream-50 text-brand-900 shadow-xs' : 'text-brand-100 hover:bg-brand-700'}">
+                <i data-lucide="users" class="w-3.5 h-3.5"></i> Irmãos (${state.brothers.length})
+              </button>
+              <button onclick="switchDesigSubTab('roles')" class="px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${currentDesigSubTab === 'roles' ? 'bg-cream-50 text-brand-900 shadow-xs' : 'text-brand-100 hover:bg-brand-700'}">
+                <i data-lucide="list-checks" class="w-3.5 h-3.5"></i> Funções (${state.roles.length})
+              </button>
+              <button onclick="openApiKeyModal()" class="p-2 text-brand-100 hover:text-white hover:bg-brand-700 rounded-xl transition-colors" title="Configurações e Backup">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- SUB-ABA 1: ESCALA MENSAL -->
+          <div id="desig-view-schedule" class="${currentDesigSubTab === 'schedule' ? '' : 'hidden'} space-y-6">
+            <div class="bg-cream-50 p-5 sm:p-6 rounded-2xl shadow-xs border border-cream-300 no-print">
+              <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h3 class="font-serif text-lg font-bold text-brand-900 flex items-center gap-2">
+                  <i data-lucide="sliders" class="w-5 h-5 text-brand-700"></i> Parâmetros da Escala Mensal
+                </h3>
+                <span class="text-[11px] text-brand-800 font-semibold bg-brand-100 px-3 py-1 rounded-full border border-brand-200 flex items-center gap-1">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Salvo localmente
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Mês</label>
+                  <select id="schedule-month" class="w-full bg-white border border-cream-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                    ${monthNames.map((m, i) => `<option value="${i}" ${i === selMonth ? 'selected' : ''}>${m}</option>`).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Ano</label>
+                  <input type="number" id="schedule-year" class="w-full bg-white border border-cream-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none" value="${selYear}">
+                </div>
+
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Dias de Reunião</label>
+                  <div class="flex flex-wrap gap-2.5 pt-1">
+                    <label class="inline-flex items-center text-xs sm:text-sm cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-cream-300 hover:bg-brand-50">
+                      <input type="checkbox" value="3" class="meeting-day rounded text-brand-800 focus:ring-brand-700" checked>
+                      <span class="ml-2 text-slate-700 font-medium">Quarta</span>
+                    </label>
+                    <label class="inline-flex items-center text-xs sm:text-sm cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-cream-300 hover:bg-brand-50">
+                      <input type="checkbox" value="4" class="meeting-day rounded text-brand-800 focus:ring-brand-700">
+                      <span class="ml-2 text-slate-700 font-medium">Quinta</span>
+                    </label>
+                    <label class="inline-flex items-center text-xs sm:text-sm cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-cream-300 hover:bg-brand-50">
+                      <input type="checkbox" value="6" class="meeting-day rounded text-brand-800 focus:ring-brand-700" checked>
+                      <span class="ml-2 text-slate-700 font-medium">Sábado</span>
+                    </label>
+                    <label class="inline-flex items-center text-xs sm:text-sm cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-cream-300 hover:bg-brand-50">
+                      <input type="checkbox" value="0" class="meeting-day rounded text-brand-800 focus:ring-brand-700">
+                      <span class="ml-2 text-slate-700 font-medium">Domingo</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 flex flex-wrap gap-3 items-center justify-between border-t border-cream-200 pt-4">
+                <div class="text-xs text-slate-500 flex items-center gap-1.5">
+                  <i data-lucide="info" class="w-4 h-4 text-brand-700 shrink-0"></i>
+                  <span>Balanceamento equitativo automático com respeito a escalas 12x36 e restrições.</span>
+                </div>
+                <button onclick="generateSchedule()" class="w-full sm:w-auto px-5 py-2.5 bg-brand-800 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2">
+                  <i data-lucide="wand2" class="w-4 h-4"></i> Gerar Nova Escala
+                </button>
+              </div>
+            </div>
+
+            <!-- Tabela da Escala -->
+            <div id="schedule-container" class="bg-cream-50 rounded-2xl shadow-xs border border-cream-300 overflow-hidden">
+              <div class="p-4 sm:p-6 border-b border-cream-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                  <h3 id="schedule-title" class="font-serif text-lg sm:text-xl font-bold text-brand-900">Designações do Mês</h3>
+                  <p class="text-xs text-slate-500 no-print mt-0.5">Toque em qualquer nome na tabela para substituir manualmente.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 no-print">
+                  <button onclick="openStatsModal()" class="px-3 py-2 bg-cream-200 hover:bg-cream-300 text-brand-900 border border-cream-300 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors">
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-700"></i> Estatísticas
+                  </button>
+                  <button onclick="openWhatsAppModal()" class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors">
+                    <i data-lucide="message-square" class="w-4 h-4 text-emerald-700"></i> WhatsApp
+                  </button>
+                  <button onclick="triggerPrintPdf()" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-colors">
+                    <i data-lucide="file-down" class="w-4 h-4"></i> Baixar PDF
+                  </button>
+                  <button onclick="window.print()" class="px-3 py-2 bg-cream-200 hover:bg-cream-300 text-brand-900 border border-cream-300 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors">
+                    <i data-lucide="printer" class="w-4 h-4 text-brand-700"></i> Imprimir
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-x-auto custom-scrollbar bg-white">
+                <table class="w-full border-collapse text-sm text-left">
+                  <thead id="schedule-thead" class="bg-cream-200/80 border-b border-cream-300 text-brand-900 font-semibold text-xs"></thead>
+                  <tbody id="schedule-tbody" class="divide-y divide-cream-200"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-ABA 2: IRMÃOS -->
+          <div id="desig-view-brothers" class="${currentDesigSubTab === 'brothers' ? '' : 'hidden'} space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-cream-50 p-6 rounded-2xl shadow-xs border border-cream-300">
+              <div>
+                <h3 class="font-serif text-xl font-bold text-brand-900">Cadastro de Irmãos</h3>
+                <p class="text-sm text-slate-500">Gerencie a lista de participantes, telefones e escalas 12x36.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="relative flex-1 sm:flex-initial">
+                  <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                  <input type="text" id="brother-search" oninput="renderBrothersList()" placeholder="Buscar irmão..." class="w-full sm:w-56 pl-9 pr-3 py-2 bg-white border border-cream-300 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                </div>
+                <button onclick="openBrotherModal()" class="px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-xs flex items-center gap-2">
+                  <i data-lucide="user-plus" class="w-4 h-4"></i> Novo Irmão
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-cream-50 rounded-2xl shadow-xs border border-cream-300 overflow-hidden">
+              <div class="overflow-x-auto bg-white">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-cream-200/70 border-b border-cream-300 text-xs uppercase font-bold text-slate-500">
+                      <th class="py-3.5 px-4">Nome</th>
+                      <th class="py-3.5 px-4">WhatsApp</th>
+                      <th class="py-3.5 px-4">Funções Habilitadas</th>
+                      <th class="py-3.5 px-4">Restrições / Escala</th>
+                      <th class="py-3.5 px-4 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="brothers-list" class="divide-y divide-cream-200 text-sm"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-ABA 3: FUNÇÕES -->
+          <div id="desig-view-roles" class="${currentDesigSubTab === 'roles' ? '' : 'hidden'} space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-cream-50 p-5 rounded-2xl shadow-xs border border-cream-300">
+              <div>
+                <h3 class="font-serif text-lg font-bold text-brand-900">Funções da Reunião</h3>
+                <p class="text-xs text-slate-500">Defina os postos técnicos a serem preenchidos na escala.</p>
+              </div>
+              <button onclick="openRoleModal()" class="inline-flex items-center justify-center px-4 py-2 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-xs gap-1.5">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i> Nova Função
+              </button>
+            </div>
+            <div id="roles-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+          </div>
+        </div>
+      `;
+
+      updateAdminLockUI();
+      renderScheduleTable();
+      renderBrothersList();
+      renderRolesGrid();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function switchDesigSubTab(subTab) {
+      currentDesigSubTab = subTab;
+      renderDesignacoesSection();
+    }
+
+    function generateSchedule(bypassAuth = false) {
+      const executeGenerator = () => {
+        if (state.brothers.length === 0) {
+          state.schedule = null;
+          if (currentView === 'designacoes') renderScheduleTable();
+          if (!bypassAuth) {
+            showToast('Cadastre os irmãos antes de gerar a escala.', 'warning');
+            switchDesigSubTab('brothers');
+          }
+          return;
+        }
+
+        const monthEl = document.getElementById('schedule-month');
+        const yearEl = document.getElementById('schedule-year');
+        const monthIdx = monthEl ? parseInt(monthEl.value) : new Date().getMonth();
+        const year = yearEl ? parseInt(yearEl.value) : new Date().getFullYear();
+
+        const dayCheckboxes = document.querySelectorAll('.meeting-day:checked');
+        const selectedDays = dayCheckboxes.length > 0
+          ? Array.from(dayCheckboxes).map(cb => parseInt(cb.value))
+          : [3, 6];
+
+        if (dayCheckboxes.length === 0 && monthEl) {
+          showToast('Selecione pelo menos um dia da semana.', 'warning');
+          return;
+        }
+
+        const dates = [];
+        const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+        for (let day = 1; day <= daysInMonth; day++) {
+          const d = new Date(year, monthIdx, day);
+          if (selectedDays.includes(d.getDay())) {
+            dates.push(new Date(d));
+          }
+        }
+
+        const assignmentCounts = {};
+        const roleCounts = {};
+        const activeBrothers = shuffleArray(state.brothers);
+        activeBrothers.forEach(b => {
+          assignmentCounts[b.id] = 0;
+          roleCounts[b.id] = {};
+        });
+
+        const scheduleResult = { month: monthIdx, year: year, dates: dates, grid: {} };
+        let lastMeetingAssigned = new Set();
+
+        dates.forEach(dateObj => {
+          const dateKey = dateObj.toISOString().split('T')[0];
+          scheduleResult.grid[dateKey] = {};
+          const assignedToday = new Set();
+
+          const sortedRoles = [...state.roles].sort((rA, rB) => {
+            const countA = activeBrothers.filter(b => Array.isArray(b.roles) && b.roles.includes(rA.id)).length;
+            const countB = activeBrothers.filter(b => Array.isArray(b.roles) && b.roles.includes(rB.id)).length;
+            return countA - countB;
+          });
+
+          sortedRoles.forEach(role => {
+            let candidates = activeBrothers.filter(b =>
+              Array.isArray(b.roles) &&
+              b.roles.includes(role.id) &&
+              !assignedToday.has(b.id) &&
+              isBrotherAvailableOnDate(b, dateObj, role.id)
+            );
+
+            if (candidates.length === 0) {
+              scheduleResult.grid[dateKey][role.id] = null;
+              return;
+            }
+
+            const minAssignmentsInPool = Math.min(...candidates.map(c => assignmentCounts[c.id]));
+            let pool = candidates.filter(c => assignmentCounts[c.id] === minAssignmentsInPool);
+
+            const notInLastMeetingPool = pool.filter(c => !lastMeetingAssigned.has(c.id));
+            if (notInLastMeetingPool.length > 0) pool = notInLastMeetingPool;
+
+            const minRoleCount = Math.min(...pool.map(c => roleCounts[c.id][role.id] || 0));
+            const diverseRolePool = pool.filter(c => (roleCounts[c.id][role.id] || 0) === minRoleCount);
+            if (diverseRolePool.length > 0) pool = diverseRolePool;
+
+            const chosen = pool[Math.floor(Math.random() * pool.length)];
+            scheduleResult.grid[dateKey][role.id] = chosen.id;
+            assignedToday.add(chosen.id);
+            assignmentCounts[chosen.id]++;
+            roleCounts[chosen.id][role.id] = (roleCounts[chosen.id][role.id] || 0) + 1;
+          });
+
+          lastMeetingAssigned = assignedToday;
+        });
+
+        state.schedule = scheduleResult;
+        persistState();
+        if (currentView === 'designacoes') renderScheduleTable();
+        if (!bypassAuth) {
+          showToast(`Escala gerada com os ${activeBrothers.length} irmãos cadastrados!`, 'success');
+        }
+      };
+
+      if (bypassAuth) executeGenerator();
+      else checkAdminAuth(executeGenerator);
+    }
+
+    function renderScheduleTable() {
+      const thead = document.getElementById('schedule-thead');
+      const tbody = document.getElementById('schedule-tbody');
+      const titleEl = document.getElementById('schedule-title');
+      if (!thead || !tbody) return;
+
+      if (!state.schedule) {
+        thead.innerHTML = '';
+        tbody.innerHTML = `<tr><td class="py-10 px-4 text-center text-slate-500 text-sm">Nenhuma escala gerada. Clique em <strong>"Gerar Nova Escala"</strong>.</td></tr>`;
+        return;
+      }
+
+      const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      const weekDays = ["DOMINGO", "SEGUNDA", "TERÇA", "QUARTA", "QUINTA", "SEXTA", "SÁBADO"];
+      if (titleEl) titleEl.textContent = `Designações - ${monthNames[state.schedule.month]} de ${state.schedule.year}`;
+
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+
+      const headerRow = document.createElement('tr');
+      headerRow.className = 'border-b border-cream-300 bg-cream-200/80 text-brand-900 font-bold';
+      headerRow.innerHTML = `<th class="py-3 px-3 text-left w-36 border-r border-cream-300">DIA / DATA</th>`;
+      state.roles.forEach(role => {
+        headerRow.innerHTML += `<th class="py-3 px-3 text-center border-r border-cream-300 min-w-[140px] uppercase font-bold text-brand-900">${escapeHtml(role.name)}</th>`;
+      });
+      thead.appendChild(headerRow);
+
+      state.schedule.dates.forEach(d => {
+        const dateKey = d.toISOString().split('T')[0];
+        const dayNum = String(d.getDate()).padStart(2, '0');
+        const monthNum = String(d.getMonth() + 1).padStart(2, '0');
+        const weekName = weekDays[d.getDay()].substring(0, 6);
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-brand-50/60 border-b border-cream-200 text-slate-800 text-xs sm:text-sm font-medium transition-colors';
+
+        let rowHtml = `
+          <td class="py-3 px-3 bg-cream-100/70 font-bold border-r border-cream-200 text-brand-900">
+            <div class="flex items-center justify-between gap-2">
+              <span>${weekName}</span>
+              <span class="text-brand-800 bg-brand-100 px-1.5 py-0.5 rounded border border-brand-200 text-xs">${dayNum}/${monthNum}</span>
+            </div>
+          </td>
+        `;
+
+        state.roles.forEach(role => {
+          const brotherId = state.schedule.grid[dateKey]?.[role.id];
+          const brother = state.brothers.find(b => b.id === brotherId);
+          const nameText = brother ? escapeHtml(brother.name) : '<span class="text-rose-600 font-bold italic">VAGO</span>';
+
+          rowHtml += `
+            <td onclick="openSwapModal('${dateKey}', '${role.id}', '${brotherId || ''}')"
+                class="py-3 px-3 text-center border-r border-cream-200 cursor-pointer hover:bg-brand-100/70 transition-colors group relative"
+                title="Clique para alterar">
+              <span>${nameText}</span>
+              <i data-lucide="edit-2" class="w-3 h-3 text-brand-700 opacity-0 group-hover:opacity-100 inline ml-1 no-print"></i>
+            </td>
+          `;
+        });
+
+        tr.innerHTML = rowHtml;
+        tbody.appendChild(tr);
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderBrothersList() {
+      const tbody = document.getElementById('brothers-list');
+      if (!tbody) return;
+
+      const searchInput = document.getElementById('brother-search');
+      const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+      const filtered = state.brothers.filter(b =>
+        b.name.toLowerCase().includes(query) ||
+        (b.restrictions && b.restrictions.toLowerCase().includes(query))
+      );
+
+      tbody.innerHTML = '';
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-10 px-4 text-center text-slate-500 text-sm">Nenhum irmão encontrado.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(b => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-cream-100/60 transition-colors';
+        const validRoles = (b.roles || []).map(rId => state.roles.find(r => r.id === rId)).filter(Boolean);
+        const rolesHtml = validRoles.length > 0
+          ? validRoles.map(r => `<span class="inline-block bg-brand-100 text-brand-900 border border-brand-200 text-[11px] font-medium px-2 py-0.5 rounded-md mr-1 mb-1">${escapeHtml(r.name)}</span>`).join('')
+          : '<span class="text-rose-600 text-xs font-medium italic">Nenhuma função marcada</span>';
+
+        const shiftBadge = b.shift12x36
+          ? `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-semibold px-2 py-0.5 rounded-md mr-1">12x36 (${b.shiftScope === 'all' ? 'Geral' : 'Som'})</span>`
+          : '';
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-brand-900 whitespace-nowrap">${escapeHtml(b.name)}</td>
+          <td class="py-3 px-4 text-xs text-slate-600 whitespace-nowrap">${b.phone ? escapeHtml(b.phone) : '<span class="text-slate-400">-</span>'}</td>
+          <td class="py-3 px-4 max-w-xs">${rolesHtml}</td>
+          <td class="py-3 px-4 text-xs text-slate-600">${shiftBadge}${b.restrictions ? escapeHtml(b.restrictions) : (!shiftBadge ? '-' : '')}</td>
+          <td class="py-3 px-4 text-right whitespace-nowrap space-x-1">
+            <button onclick="openBrotherModal('${b.id}')" class="p-1.5 text-slate-500 hover:text-brand-800 hover:bg-cream-200 rounded-lg transition-colors" title="Editar irmão">
+              <i data-lucide="edit-3" class="w-4 h-4 inline"></i>
+            </button>
+            <button onclick="deleteBrother('${b.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Remover irmão">
+              <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderRolesGrid() {
+      const grid = document.getElementById('roles-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      state.roles.forEach(role => {
+        const assignedCount = state.brothers.filter(b => b.roles.includes(role.id)).length;
+        const card = document.createElement('div');
+        card.className = 'bg-cream-50 p-4 rounded-2xl shadow-xs border border-cream-300 flex flex-col justify-between';
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between gap-2">
+              <h4 class="font-bold text-sm text-brand-900 truncate">${escapeHtml(role.name)}</h4>
+              <span class="p-1.5 bg-brand-100 text-brand-800 rounded-lg shrink-0">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">${assignedCount} irmão(s) habilitado(s)</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-cream-200 flex justify-end gap-1">
+            <button onclick="openRoleModal('${role.id}')" class="p-1 text-slate-400 hover:text-brand-800 hover:bg-cream-200 rounded-lg transition-colors" title="Editar">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="deleteRole('${role.id}')" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // =========================================================================
+    // AUTENTICAÇÃO, MODAIS DE IRMÃOS, FUNÇÕES, TROCA, WHATSAPP E PDF
+    // =========================================================================
+    function checkAdminAuth(callback) {
+      if (state.isUnlocked) { callback(); return; }
+      pendingAdminAction = callback;
+      document.getElementById('input-admin-password').value = '';
+      document.getElementById('auth-error-msg').classList.add('hidden');
+      document.getElementById('modal-auth').classList.remove('hidden');
+      setTimeout(() => document.getElementById('input-admin-password').focus(), 100);
+    }
+
+    function closeAuthModal() {
+      document.getElementById('modal-auth').classList.add('hidden');
+      pendingAdminAction = null;
+    }
+
+    function verifyAdminPassword() {
+      const inputPass = document.getElementById('input-admin-password').value;
+      if (inputPass === state.adminPassword) {
+        state.isUnlocked = true;
+        updateAdminLockUI();
+        closeAuthModal();
+        showToast('Modo responsável liberado!', 'success');
+        if (typeof pendingAdminAction === 'function') {
+          const action = pendingAdminAction;
+          pendingAdminAction = null;
+          action();
+        }
+      } else {
+        document.getElementById('auth-error-msg').classList.remove('hidden');
+      }
+    }
+
+    function toggleAdminLock() {
+      if (state.isUnlocked) {
+        state.isUnlocked = false;
+        updateAdminLockUI();
+        showToast('Edição bloqueada novamente.', 'info');
+      } else {
+        checkAdminAuth(() => {});
+      }
+    }
+
+    function updateAdminLockUI() {
+      const icon = document.getElementById('admin-lock-icon');
+      const text = document.getElementById('admin-status-text');
+      const btn = document.getElementById('admin-status-btn');
+      if (!btn) return;
+
+      if (state.isUnlocked) {
+        if (icon) icon.setAttribute('data-lucide', 'unlock');
+        if (text) text.textContent = 'Liberado';
+        btn.className = "px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 bg-emerald-500/20 text-emerald-100 border border-emerald-400/40 hover:bg-emerald-500/30 transition-all";
+      } else {
+        if (icon) icon.setAttribute('data-lucide', 'lock');
+        if (text) text.textContent = 'Restrito';
+        btn.className = "px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 bg-amber-500/20 text-amber-200 border border-amber-400/30 hover:bg-amber-500/30 transition-all";
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function toggleShiftFields() {
+      const enabled = document.getElementById('brother-shift-enabled').checked;
+      const fields = document.getElementById('brother-shift-fields');
+      fields.classList.toggle('hidden', !enabled);
+    }
+
+    function openBrotherModal(id = null) {
+      checkAdminAuth(() => {
+        const modal = document.getElementById('modal-brother');
+        const title = document.getElementById('modal-brother-title');
+        const checkboxesContainer = document.getElementById('brother-roles-checkboxes');
+
+        checkboxesContainer.innerHTML = state.roles.map(r => `
+          <label class="inline-flex items-center text-xs text-slate-700 cursor-pointer">
+            <input type="checkbox" value="${r.id}" class="brother-role-cb rounded text-brand-800 focus:ring-brand-700">
+            <span class="ml-1.5 truncate">${escapeHtml(r.name)}</span>
+          </label>
+        `).join('');
+
+        if (id) {
+          const brother = state.brothers.find(b => b.id === id);
+          if (!brother) return;
+          title.textContent = 'Editar Irmão';
+          document.getElementById('brother-id').value = brother.id;
+          document.getElementById('brother-name').value = brother.name;
+          document.getElementById('brother-phone').value = brother.phone || '';
+          document.getElementById('brother-restrictions').value = brother.restrictions || '';
+          document.getElementById('brother-shift-enabled').checked = !!brother.shift12x36;
+          document.getElementById('brother-shift-ref').value = brother.shiftRefDate || '2026-11-18';
+          document.getElementById('brother-shift-scope').value = brother.shiftScope || 'audio';
+          document.querySelectorAll('.brother-role-cb').forEach(cb => { cb.checked = brother.roles.includes(cb.value); });
+        } else {
+          title.textContent = 'Cadastrar Irmão';
+          document.getElementById('brother-id').value = '';
+          document.getElementById('brother-name').value = '';
+          document.getElementById('brother-phone').value = '';
+          document.getElementById('brother-restrictions').value = '';
+          document.getElementById('brother-shift-enabled').checked = false;
+          document.getElementById('brother-shift-ref').value = '2026-11-18';
+          document.getElementById('brother-shift-scope').value = 'audio';
+          document.querySelectorAll('.brother-role-cb').forEach(cb => { cb.checked = cb.value !== 'r5'; });
+        }
+
+        toggleShiftFields();
+        modal.classList.remove('hidden');
+      });
+    }
+
+    function closeBrotherModal() { document.getElementById('modal-brother').classList.add('hidden'); }
+
+    function saveBrother() {
+      const id = document.getElementById('brother-id').value;
+      const name = document.getElementById('brother-name').value.trim();
+      const phone = document.getElementById('brother-phone').value.trim().replace(/\D/g, '');
+      const restrictions = document.getElementById('brother-restrictions').value.trim();
+      const shift12x36 = document.getElementById('brother-shift-enabled').checked;
+      const shiftRefDate = document.getElementById('brother-shift-ref').value;
+      const shiftScope = document.getElementById('brother-shift-scope').value;
+
+      if (!name) { showToast('Por favor, digite o nome do irmão.', 'warning'); return; }
+
+      const selectedRoles = Array.from(document.querySelectorAll('.brother-role-cb:checked')).map(cb => cb.value);
+      const brotherData = { name, phone, roles: selectedRoles, restrictions, shift12x36, shiftRefDate, shiftScope };
+
+      if (id) {
+        const index = state.brothers.findIndex(b => b.id === id);
+        if (index !== -1) state.brothers[index] = { id, ...brotherData };
+        showToast('Cadastro atualizado!', 'success');
+      } else {
+        state.brothers.push({ id: 'b_' + Date.now(), ...brotherData });
+        state.brothers.sort((a, b) => a.name.localeCompare(b.name));
+        showToast('Irmão cadastrado com sucesso!', 'success');
+      }
+
+      persistState();
+      closeBrotherModal();
+      renderDesignacoesSection();
+    }
+
+    function deleteBrother(id) {
+      checkAdminAuth(() => {
+        const brother = state.brothers.find(b => b.id === id);
+        showConfirmDialog('Remover Irmão', `Deseja realmente remover ${brother ? brother.name : 'este irmão'}?`, () => {
+          state.brothers = state.brothers.filter(b => b.id !== id);
+          persistState();
+          renderDesignacoesSection();
+          showToast('Irmão removido.', 'info');
+        });
+      });
+    }
+
+    function openRoleModal(id = null) {
+      checkAdminAuth(() => {
+        const modal = document.getElementById('modal-role');
+        const title = document.getElementById('modal-role-title');
+        if (id) {
+          const role = state.roles.find(r => r.id === id);
+          if (!role) return;
+          title.textContent = 'Editar Função';
+          document.getElementById('role-id').value = role.id;
+          document.getElementById('role-name').value = role.name;
+        } else {
+          title.textContent = 'Cadastrar Função';
+          document.getElementById('role-id').value = '';
+          document.getElementById('role-name').value = '';
+        }
+        modal.classList.remove('hidden');
+      });
+    }
+
+    function closeRoleModal() { document.getElementById('modal-role').classList.add('hidden'); }
+
+    function saveRole() {
+      const id = document.getElementById('role-id').value;
+      const name = document.getElementById('role-name').value.trim().toUpperCase();
+      if (!name) { showToast('Digite o nome da função.', 'warning'); return; }
+
+      if (id) {
+        const idx = state.roles.findIndex(r => r.id === id);
+        if (idx !== -1) state.roles[idx].name = name;
+        showToast('Função atualizada!', 'success');
+      } else {
+        const newRoleId = 'r_' + Date.now();
+        state.roles.push({ id: newRoleId, name });
+        state.brothers.forEach(b => { if (!b.roles.includes(newRoleId)) b.roles.push(newRoleId); });
+        showToast('Nova função adicionada!', 'success');
+      }
+
+      persistState();
+      closeRoleModal();
+      renderDesignacoesSection();
+    }
+
+    function deleteRole(id) {
+      checkAdminAuth(() => {
+        showConfirmDialog('Remover Função', 'Deseja realmente remover esta função da escala?', () => {
+          state.roles = state.roles.filter(r => r.id !== id);
+          state.brothers.forEach(b => { b.roles = b.roles.filter(rId => rId !== id); });
+          persistState();
+          renderDesignacoesSection();
+          showToast('Função removida.', 'info');
+        });
+      });
+    }
+
+    function openSwapModal(dateKey, roleId, currentBrotherId) {
+      checkAdminAuth(() => {
+        currentSwapTarget = { dateKey, roleId, currentBrotherId };
+        const dateObj = new Date(dateKey + 'T00:00:00');
+        const role = state.roles.find(r => r.id === roleId);
+        const select = document.getElementById('swap-select');
+
+        document.getElementById('swap-subtitle').textContent = `${role?.name || 'Função'} - ${dateObj.toLocaleDateString('pt-BR')}`;
+        select.innerHTML = '<option value="">-- VAGO (Ninguém) --</option>';
+
+        const assignedOtherRoles = new Set();
+        Object.entries(state.schedule.grid[dateKey] || {}).forEach(([rId, bId]) => {
+          if (rId !== roleId && bId) assignedOtherRoles.add(bId);
+        });
+
+        state.brothers.forEach(b => {
+          const isBusy = assignedOtherRoles.has(b.id);
+          const isAvailable = isBrotherAvailableOnDate(b, dateObj, roleId);
+          let statusTag = isBusy ? ' (Já escalado hoje)' : (!isAvailable ? ' (Plantão 12x36)' : '');
+          const option = document.createElement('option');
+          option.value = b.id;
+          option.textContent = `${b.name}${statusTag}`;
+          if (b.id === currentBrotherId) option.selected = true;
+          select.appendChild(option);
+        });
+
+        document.getElementById('modal-swap').classList.remove('hidden');
+      });
+    }
+
+    function closeSwapModal() { document.getElementById('modal-swap').classList.add('hidden'); currentSwapTarget = null; }
+
+    function confirmSwap() {
+      if (!currentSwapTarget || !state.schedule) return;
+      const newBrotherId = document.getElementById('swap-select').value || null;
+      const { dateKey, roleId } = currentSwapTarget;
+      state.schedule.grid[dateKey][roleId] = newBrotherId;
+      persistState();
+      closeSwapModal();
+      renderScheduleTable();
+      showToast('Designação atualizada!', 'success');
+    }
+
+    function openStatsModal() {
+      const container = document.getElementById('stats-container');
+      container.innerHTML = '';
+      if (!state.schedule) return;
+
+      const counts = {};
+      state.brothers.forEach(b => counts[b.id] = 0);
+      Object.values(state.schedule.grid).forEach(dayObj => {
+        Object.values(dayObj).forEach(bId => { if (bId && counts[bId] !== undefined) counts[bId]++; });
+      });
+
+      const maxCount = Math.max(...Object.values(counts), 1);
+      Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([bId, count]) => {
+        const brother = state.brothers.find(b => b.id === bId);
+        if (!brother) return;
+        const pct = Math.round((count / maxCount) * 100);
+        const card = document.createElement('div');
+        card.className = 'bg-white p-3 rounded-xl border border-cream-300 flex flex-col justify-between';
+        card.innerHTML = `
+          <div class="text-xs font-semibold text-brand-900 truncate">${escapeHtml(brother.name)}</div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span class="text-lg font-bold text-brand-800">${count}</span>
+            <span class="text-[10px] text-slate-500">designações</span>
+          </div>
+          <div class="w-full bg-cream-200 h-1.5 rounded-full mt-1.5 overflow-hidden">
+            <div class="bg-brand-800 h-full rounded-full" style="width: ${pct}%"></div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById('modal-stats').classList.remove('hidden');
+    }
+
+    function closeStatsModal() { document.getElementById('modal-stats').classList.add('hidden'); }
+
+    function openWhatsAppModal() {
+      if (!state.schedule) { showToast('Gere uma escala primeiro.', 'warning'); return; }
+      const monthNames = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
+      const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+      let msg = `📋 *DESIGNAÇÕES TÉCNICAS - MÊS DE ${monthNames[state.schedule.month]} DE ${state.schedule.year}*\n\n`;
+      state.schedule.dates.forEach(d => {
+        const dateKey = d.toISOString().split('T')[0];
+        const dayStr = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+        msg += `📅 *${weekDays[d.getDay()].toUpperCase()} (${dayStr})*\n`;
+        state.roles.forEach(role => {
+          const bId = state.schedule.grid[dateKey]?.[role.id];
+          const b = state.brothers.find(item => item.id === bId);
+          msg += `• *${role.name}:* ${b ? b.name : 'VAGO'}\n`;
+        });
+        msg += `\n`;
+      });
+      msg += `📖 _"Mas que todas as coisas ocorram com decência e ordem" (1 Coríntios 14:40)_`;
+      document.getElementById('wa-group-text').value = msg;
+
+      const indContainer = document.getElementById('wa-individual-list');
+      indContainer.innerHTML = '';
+      const brotherAssignments = {};
+      state.schedule.dates.forEach(d => {
+        const dateKey = d.toISOString().split('T')[0];
+        const dayStr = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+        state.roles.forEach(role => {
+          const bId = state.schedule.grid[dateKey]?.[role.id];
+          if (bId) {
+            if (!brotherAssignments[bId]) brotherAssignments[bId] = [];
+            brotherAssignments[bId].push({ dateStr: `${weekDays[d.getDay()]} (${dayStr})`, roleName: role.name });
+          }
+        });
+      });
+
+      state.brothers.forEach(brother => {
+        const assignments = brotherAssignments[brother.id] || [];
+        if (assignments.length === 0) return;
+        let indMsg = `Olá, *${brother.name}*! Seguem suas designações:\n\n` + assignments.map(a => `📅 *${a.dateStr}* → ${a.roleName}`).join('\n');
+        const row = document.createElement('div');
+        row.className = 'p-3 hover:bg-cream-50 flex items-center justify-between gap-3';
+        const btn = document.createElement('button');
+        btn.className = 'px-3 py-1.5 bg-brand-800 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl shrink-0';
+        btn.textContent = 'Enviar';
+        btn.onclick = () => {
+          const clean = (brother.phone || '').replace(/\D/g, '');
+          window.open(clean ? `https://wa.me/55${clean}?text=${encodeURIComponent(indMsg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(indMsg)}`, '_blank');
+        };
+        row.innerHTML = `<div class="min-w-0 flex-1"><div class="font-bold text-brand-900 text-sm">${escapeHtml(brother.name)} (${assignments.length}x)</div><div class="text-xs text-slate-500 truncate">${assignments.map(a => `${a.dateStr}: ${a.roleName}`).join(' | ')}</div></div>`;
+        row.appendChild(btn);
+        indContainer.appendChild(row);
+      });
+
+      document.getElementById('modal-whatsapp').classList.remove('hidden');
+      switchWaTab('group');
+    }
+
+    function closeWhatsAppModal() { document.getElementById('modal-whatsapp').classList.add('hidden'); }
+
+    function switchWaTab(tab) {
+      document.getElementById('wa-content-group').classList.toggle('hidden', tab !== 'group');
+      document.getElementById('wa-content-individual').classList.toggle('hidden', tab !== 'individual');
+    }
+
+    function copyWaGroupText() {
+      const textarea = document.getElementById('wa-group-text');
+      textarea.select();
+      document.execCommand('copy');
+      showToast('Texto copiado!', 'success');
+    }
+
+    function sendWaGroupMessage() {
+      const text = document.getElementById('wa-group-text').value;
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function triggerPrintPdf() {
+      if (!state.schedule || !window.jspdf) { window.print(); return; }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      const weekDays = ["DOMINGO", "SEGUNDA", "TERÇA", "QUARTA", "QUINTA", "SEXTA", "SÁBADO"];
+      const docTitle = `Designações - ${monthNames[state.schedule.month]} de ${state.schedule.year}`;
+
+      doc.setFillColor(36, 53, 44);
+      doc.rect(14, 12, 269, 16, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text(docTitle.toUpperCase(), 20, 22);
+
+      const head = [['DIA / DATA', ...state.roles.map(r => r.name.toUpperCase())]];
+      const body = state.schedule.dates.map(d => {
+        const dateKey = d.toISOString().split('T')[0];
+        const row = [`${weekDays[d.getDay()].substring(0, 6)} - ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`];
+        state.roles.forEach(role => {
+          const bId = state.schedule.grid[dateKey]?.[role.id];
+          const brother = state.brothers.find(b => b.id === bId);
+          row.push(brother ? brother.name : 'VAGO');
+        });
+        return row;
+      });
+
+      doc.autoTable({ head, body, startY: 33, margin: { left: 14, right: 14 }, theme: 'grid' });
+      doc.save(`Designacoes_${monthNames[state.schedule.month]}_${state.schedule.year}.pdf`);
+      showToast('PDF baixado com sucesso!', 'success');
+    }
+
+    function openApiKeyModal() { document.getElementById('modal-api-key').classList.remove('hidden'); }
+    function closeApiKeyModal() { document.getElementById('modal-api-key').classList.add('hidden'); }
+    function saveApiKey() {
+      const pass = document.getElementById('user-admin-password').value.trim();
+      if (pass) { state.adminPassword = pass; localStorage.setItem(STORAGE_KEYS.ADMIN_PASS, pass); }
+      closeApiKeyModal();
+      showToast('Configurações salvas!', 'success');
+    }
+
+    function exportBackup() {
+      const blob = new Blob([JSON.stringify({ roles: state.roles, brothers: state.brothers, schedule: state.schedule, cong: state.cong }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup-congregacao-leste.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.roles && parsed.brothers) {
+            state.roles = parsed.roles;
+            state.brothers = parsed.brothers;
+            if (parsed.schedule) {
+              parsed.schedule.dates = parsed.schedule.dates.map(iso => new Date(iso));
+              state.schedule = parsed.schedule;
+            }
+            if (parsed.cong) { state.cong = parsed.cong; saveCongState(); }
+            persistState();
+            closeApiKeyModal();
+            renderView(currentView);
+            showToast('Backup restaurado!', 'success');
+          }
+        } catch (err) { showToast('Arquivo inválido.', 'error'); }
+      };
+      reader.readAsText(file);
+    }
+
+    // =========================================================================
+    // 3. ASSISTÊNCIAS
+    // =========================================================================
+    function renderAssistencias() {
+      const totalPresencial = state.cong.assistencias.reduce((acc, a) => acc + Number(a.presencial), 0);
+      const mediaTotal = state.cong.assistencias.length
+        ? Math.round(state.cong.assistencias.reduce((acc, a) => acc + Number(a.presencial) + Number(a.zoom), 0) / state.cong.assistencias.length)
+        : 0;
+
+      mainContent.innerHTML = `
+        <div class="space-y-6">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-widest text-amber-800/80 mb-1">RELATÓRIO DE REUNIÕES</p>
+            <h2 class="font-serif text-3xl font-bold text-brand-900">Assistências</h2>
+            <p class="text-sm text-slate-500 mt-1">Acompanhamento de presença no Salão do Reino e videoconferência.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-cream-50 p-5 rounded-2xl border border-cream-300 shadow-xs">
+              <span class="text-xs font-medium text-slate-500">Média Total por Reunião</span>
+              <p class="font-serif text-3xl font-bold text-brand-900 mt-2">${mediaTotal} pessoas</p>
+            </div>
+            <div class="bg-cream-50 p-5 rounded-2xl border border-cream-300 shadow-xs">
+              <span class="text-xs font-medium text-slate-500">Acumulado Presencial (${state.cong.assistencias.length} reuniões)</span>
+              <p class="font-serif text-3xl font-bold text-brand-800 mt-2">${totalPresencial} pessoas</p>
+            </div>
+          </div>
+
+          <form id="assistenciaForm" class="bg-cream-50 p-5 rounded-2xl border border-cream-300 shadow-xs grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Data</label>
+              <input type="date" id="assDate" required class="w-full px-3 py-2 rounded-xl border border-cream-300 bg-white text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Reunião</label>
+              <select id="assTipo" class="w-full px-3 py-2 rounded-xl border border-cream-300 bg-white text-sm">
+                <option value="Fim de Semana">Fim de Semana</option>
+                <option value="Meio de Semana">Meio de Semana</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Salão</label>
+                <input type="number" id="assPresencial" min="0" required placeholder="110" class="w-full px-3 py-2 rounded-xl border border-cream-300 bg-white text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Zoom</label>
+                <input type="number" id="assZoom" min="0" required placeholder="15" class="w-full px-3 py-2 rounded-xl border border-cream-300 bg-white text-sm">
+              </div>
+            </div>
+            <button type="submit" class="py-2 px-4 rounded-xl bg-brand-800 hover:bg-brand-700 text-white text-sm font-semibold transition-colors">
+              Registrar
+            </button>
+          </form>
+
+          <div class="bg-cream-50 rounded-2xl border border-cream-300 shadow-xs overflow-hidden">
+            <div class="overflow-x-auto bg-white">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-cream-200/70 border-b border-cream-300 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <th class="py-3.5 px-5">Data</th>
+                    <th class="py-3.5 px-5">Tipo</th>
+                    <th class="py-3.5 px-5">Presencial</th>
+                    <th class="py-3.5 px-5">Zoom</th>
+                    <th class="py-3.5 px-5">Total</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-cream-200 text-sm">
+                  ${state.cong.assistencias.map(a => `
+                    <tr class="hover:bg-cream-100/70">
+                      <td class="py-3.5 px-5 font-semibold text-brand-900">${formatDateBR(a.date)}</td>
+                      <td class="py-3.5 px-5 text-slate-600">${escapeHtml(a.tipo)}</td>
+                      <td class="py-3.5 px-5 font-medium text-slate-800">${a.presencial}</td>
+                      <td class="py-3.5 px-5 text-slate-600">${a.zoom}</td>
+                      <td class="py-3.5 px-5 font-bold text-brand-800">${Number(a.presencial) + Number(a.zoom)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('assistenciaForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        state.cong.assistencias.unshift({
+          id: 'a_' + Date.now(),
+          date: document.getElementById('assDate').value,
+          tipo: document.getElementById('assTipo').value,
+          presencial: Number(document.getElementById('assPresencial').value),
+          zoom: Number(document.getElementById('assZoom').value)
+        });
+        saveCongState();
+        renderAssistencias();
+        showToast('Assistência registrada!', 'success');
+      });
+    }
+
+    // =========================================================================
+    // 4. ESCALA DE LIMPEZA EDITÁVEL (SALÃO DO REINO, ALTO PARAÍSO, PARAÍSO, SANTA EFIGÊNIA)
+    // =========================================================================
+    function renderLimpeza() {
+      const gruposOficiais = ['Salão do Reino', 'Alto Paraíso', 'Paraíso', 'Santa Efigênia'];
+
+      mainContent.innerHTML = `
+        <div class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-widest text-amber-800/80 mb-1">MANUTENÇÃO E ZELO</p>
+              <h2 class="font-serif text-3xl font-bold text-brand-900">Escala de Limpeza</h2>
+              <p class="text-sm text-slate-500 mt-1">Grupos designados: Salão do Reino, Alto Paraíso, Paraíso e Santa Efigênia.</p>
+            </div>
+            <button onclick="openLimpezaModal()" class="self-start inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-800 hover:bg-brand-700 text-white text-sm font-semibold shadow-xs transition-colors">
+              <i data-lucide="plus" class="w-4 h-4"></i> Nova Semana
+            </button>
+          </div>
+
+          <!-- Resumo dos 4 Grupos -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            ${gruposOficiais.map(grupo => {
+              const count = state.cong.limpeza.filter(l => l.grupo === grupo).length;
+              return `
+                <div class="bg-cream-50 p-4 rounded-2xl border border-cream-300 shadow-xs">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-brand-800">${grupo}</span>
+                  <p class="font-serif text-2xl font-bold text-brand-900 mt-1">${count} <span class="text-xs font-sans font-normal text-slate-500">semana(s)</span></p>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Lista Editável da Escala de Limpeza -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${state.cong.limpeza.map(item => `
+              <div class="bg-cream-50 p-5 rounded-2xl border ${item.concluido ? 'border-emerald-300 bg-emerald-50/40' : 'border-cream-300'} shadow-xs flex flex-col justify-between gap-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-brand-800">${formatDateBR(item.date)}</span>
+                    <h3 class="font-serif text-xl font-bold text-brand-900 mt-0.5">${escapeHtml(item.grupo)}</h3>
+                    <p class="text-sm text-slate-700 mt-1">Responsável: <strong>${escapeHtml(item.responsavel)}</strong></p>
+                    ${item.obs ? `<p class="text-xs text-slate-500 mt-1">${escapeHtml(item.obs)}</p>` : ''}
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button onclick="openLimpezaModal('${item.id}')" class="p-2 rounded-xl text-slate-500 hover:text-brand-800 hover:bg-cream-200 transition-colors" title="Editar escala">
+                      <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="deleteLimpezaItem('${item.id}')" class="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Remover">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="pt-3 border-t border-cream-200 flex items-center justify-between">
+                  <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${item.concluido ? 'text-emerald-800' : 'text-amber-800'}">
+                    <span class="w-2 h-2 rounded-full ${item.concluido ? 'bg-emerald-600' : 'bg-amber-500'}"></span>
+                    ${item.concluido ? 'Limpeza concluída' : 'Aguardando realização'}
+                  </span>
+                  <button onclick="toggleLimpeza('${item.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${item.concluido ? 'bg-cream-200 text-slate-700 hover:bg-cream-300' : 'bg-brand-800 text-white hover:bg-brand-700'}">
+                    ${item.concluido ? 'Reabrir' : 'Marcar concluída'}
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function openLimpezaModal(id = null) {
+      const modal = document.getElementById('modal-limpeza');
+      const title = document.getElementById('modal-limpeza-title');
+      const datalist = document.getElementById('brothers-datalist');
+      
+      if (datalist) {
+        datalist.innerHTML = state.brothers.map(b => `<option value="${escapeHtml(b.name)}">`).join('');
+      }
+
+      if (id) {
+        const item = state.cong.limpeza.find(l => l.id === id);
+        if (!item) return;
+        title.textContent = 'Editar Escala de Limpeza';
+        document.getElementById('limpeza-id').value = item.id;
+        document.getElementById('limpeza-date').value = item.date;
+        document.getElementById('limpeza-grupo').value = item.grupo;
+        document.getElementById('limpeza-responsavel').value = item.responsavel;
+        document.getElementById('limpeza-obs').value = item.obs || '';
+        document.getElementById('limpeza-status').value = String(!!item.concluido);
+      } else {
+        title.textContent = 'Adicionar Semana de Limpeza';
+        document.getElementById('limpeza-id').value = '';
+        document.getElementById('limpeza-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('limpeza-grupo').value = 'Salão do Reino';
+        document.getElementById('limpeza-responsavel').value = '';
+        document.getElementById('limpeza-obs').value = '';
+        document.getElementById('limpeza-status').value = 'false';
+      }
+
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeLimpezaModal() {
+      document.getElementById('modal-limpeza').classList.add('hidden');
+    }
+
+    function saveLimpezaItem() {
+      const id = document.getElementById('limpeza-id').value;
+      const date = document.getElementById('limpeza-date').value;
+      const grupo = document.getElementById('limpeza-grupo').value;
+      const responsavel = document.getElementById('limpeza-responsavel').value.trim();
+      const obs = document.getElementById('limpeza-obs').value.trim();
+      const concluido = document.getElementById('limpeza-status').value === 'true';
+
+      if (!date || !responsavel) {
+        showToast('Preencha a data e o nome do responsável.', 'warning');
+        return;
+      }
+
+      if (id) {
+        const idx = state.cong.limpeza.findIndex(l => l.id === id);
+        if (idx !== -1) {
+          state.cong.limpeza[idx] = { id, date, grupo, responsavel, obs, concluido };
+        }
+        showToast('Escala de limpeza atualizada!', 'success');
+      } else {
+        state.cong.limpeza.push({
+          id: 'l_' + Date.now(),
+          date,
+          grupo,
+          responsavel,
+          obs,
+          concluido
+        });
+        state.cong.limpeza.sort((a, b) => a.date.localeCompare(b.date));
+        showToast('Nova semana adicionada à limpeza!', 'success');
+      }
+
+      saveCongState();
+      closeLimpezaModal();
+      renderLimpeza();
+    }
+
+    function deleteLimpezaItem(id) {
+      showConfirmDialog(
+        'Remover Semana de Limpeza',
+        'Deseja realmente remover este registro da escala de limpeza?',
+        () => {
+          state.cong.limpeza = state.cong.limpeza.filter(l => l.id !== id);
+          saveCongState();
+          renderLimpeza();
+          showToast('Registro removido.', 'info');
+        }
+      );
+    }
+
+    function toggleLimpeza(id) {
+      const item = state.cong.limpeza.find(l => l.id === id);
+      if (item) {
+        item.concluido = !item.concluido;
+        saveCongState();
+        renderLimpeza();
+        showToast(item.concluido ? 'Limpeza marcada como concluída!' : 'Status de limpeza reaberto.', 'success');
+      }
+    }
+
+    // =========================================================================
+    // 5. ÁUDIO E VÍDEO
+    // =========================================================================
+    function generateAudioOnlySchedule() {
+      if (!state.schedule || !state.schedule.dates || state.schedule.dates.length === 0) {
+        generateSchedule(true);
+      }
+
+      const audioBrothers = shuffleArray(
+        state.brothers.filter(b => Array.isArray(b.roles) && b.roles.includes('r5'))
+      );
+
+      if (audioBrothers.length === 0) {
+        showToast('Nenhum irmão habilitado para Som / Áudio encontrado.', 'warning');
+        return;
+      }
+
+      const audioCounts = {};
+      audioBrothers.forEach(b => { audioCounts[b.id] = 0; });
+      let lastAudioBrotherId = null;
+
+      state.schedule.dates.forEach(d => {
+        const dateKey = d.toISOString().split('T')[0];
+        if (!state.schedule.grid[dateKey]) state.schedule.grid[dateKey] = {};
+
+        // Irmãos já escalados em outras funções neste mesmo dia
+        const busyOtherRoles = new Set();
+        Object.entries(state.schedule.grid[dateKey]).forEach(([rId, bId]) => {
+          if (rId !== 'r5' && bId) busyOtherRoles.add(bId);
+        });
+
+        // Candidatos disponíveis para Som/Áudio no dia (sem conflito de horário ou plantão 12x36)
+        let candidates = audioBrothers.filter(b =>
+          !busyOtherRoles.has(b.id) && isBrotherAvailableOnDate(b, d, 'r5')
+        );
+
+        // Fallback caso todos os habilitados de som já estejam em outra função no dia
+        if (candidates.length === 0) {
+          candidates = audioBrothers.filter(b => isBrotherAvailableOnDate(b, d, 'r5'));
+        }
+
+        if (candidates.length === 0) {
+          state.schedule.grid[dateKey]['r5'] = null;
+          return;
+        }
+
+        const minCount = Math.min(...candidates.map(c => audioCounts[c.id]));
+        let pool = candidates.filter(c => audioCounts[c.id] === minCount);
+
+        const notLastPool = pool.filter(c => c.id !== lastAudioBrotherId);
+        if (notLastPool.length > 0) pool = notLastPool;
+
+        const chosen = pool[Math.floor(Math.random() * pool.length)];
+
+        // Se o escolhido estava em outra função no mesmo dia, libera o outro posto para evitar duplicidade
+        Object.keys(state.schedule.grid[dateKey]).forEach(rId => {
+          if (rId !== 'r5' && state.schedule.grid[dateKey][rId] === chosen.id) {
+            state.schedule.grid[dateKey][rId] = null;
+          }
+        });
+
+        state.schedule.grid[dateKey]['r5'] = chosen.id;
+        audioCounts[chosen.id]++;
+        lastAudioBrotherId = chosen.id;
+      });
+
+      persistState();
+      renderAudioVideo();
+      showToast('Nova escala de Som / Áudio gerada com sucesso!', 'success');
+    }
+
+    function exportAudioPdf() {
+      if (!state.schedule || !state.schedule.dates || state.schedule.dates.length === 0) {
+        showToast('Nenhuma escala disponível para exportar.', 'warning');
+        return;
+      }
+
+      if (!window.jspdf) {
+        window.print();
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+      const docTitle = `Escala de Áudio e Vídeo - ${monthNames[state.schedule.month]} de ${state.schedule.year}`;
+
+      doc.setFillColor(36, 53, 44);
+      doc.rect(14, 12, 182, 16, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text(docTitle.toUpperCase(), 20, 22);
+
+      const head = [['DATA', 'DIA DA SEMANA', 'OPERADOR DE SOM / ÁUDIO']];
+      const body = state.schedule.dates.map(d => {
+        const dateKey = d.toISOString().split('T')[0];
+        const somId = state.schedule.grid[dateKey]?.['r5'];
+        const som = state.brothers.find(b => b.id === somId);
+        return [
+          formatDateBR(dateKey),
+          weekDays[d.getDay()],
+          som ? som.name : 'VAGO'
+        ];
+      });
+
+      doc.autoTable({
+        head,
+        body,
+        startY: 33,
+        margin: { left: 14, right: 14 },
+        theme: 'grid',
+        headStyles: { fillColor: [36, 53, 44], textColor: [255, 255, 255] }
+      });
+
+      doc.save(`Escala_Audio_Video_${monthNames[state.schedule.month]}_${state.schedule.year}.pdf`);
+      showToast('PDF da escala de Áudio e Vídeo baixado!', 'success');
+    }
+
+    function sendWeeklyAudioWhatsApp(phone, encodedMsg) {
+      const msg = decodeURIComponent(encodedMsg);
+      const clean = (phone || '').replace(/\D/g, '');
+      const url = clean
+        ? `https://wa.me/55${clean}?text=${encodeURIComponent(msg)}`
+        : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    }
+
+    function copyWeeklyAudioMsg(encodedMsg) {
+      const msg = decodeURIComponent(encodedMsg);
+      const textarea = document.createElement('textarea');
+      textarea.value = msg;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      showToast('Mensagem do responsável copiada!', 'success');
+    }
+
+    function renderAudioVideo() {
+      const allDates = state.schedule ? state.schedule.dates : [];
+      const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+      // Identifica as reuniões da semana atual (ou próximas 2 reuniões da escala)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const nextMeetings = allDates.filter(d => {
+        const dt = new Date(d);
+        dt.setHours(0, 0, 0, 0);
+        return dt >= today;
+      });
+      const weekDates = (nextMeetings.length > 0 ? nextMeetings : allDates).slice(0, 2);
+
+      // Agrupa designações da semana por irmão responsável pelo Som / Áudio
+      const weeklyAudioMap = {};
+      weekDates.forEach(d => {
+        const dateKey = d.toISOString().split('T')[0];
+        const somId = state.schedule?.grid[dateKey]?.['r5'];
+        const brother = state.brothers.find(b => b.id === somId);
+        if (brother) {
+          if (!weeklyAudioMap[brother.id]) {
+            weeklyAudioMap[brother.id] = { brother, dates: [] };
+          }
+          weeklyAudioMap[brother.id].dates.push(`${weekDays[d.getDay()]} (${formatDateBR(dateKey)})`);
+        }
+      });
+
+      const weeklyResponsibles = Object.values(weeklyAudioMap);
+      const mesTitulo = state.schedule ? `${monthNames[state.schedule.month]} de ${state.schedule.year}` : '';
+
+      mainContent.innerHTML = `
+        <div class="space-y-6">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-widest text-amber-800/80 mb-1">EQUIPAMENTOS E TRANSMISSÃO</p>
+              <h2 class="font-serif text-3xl font-bold text-brand-900">Áudio e vídeo</h2>
+              <p class="text-sm text-slate-500 mt-1">Operação da mesa de som, mídias e transmissão Zoom (${mesTitulo}).</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="generateAudioOnlySchedule()" class="px-4 py-2.5 rounded-xl bg-brand-800 hover:bg-brand-700 text-white text-xs sm:text-sm font-semibold shadow-xs flex items-center gap-2 transition-colors">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Gerar Nova Escala (Som)
+              </button>
+              <button onclick="exportAudioPdf()" class="px-4 py-2.5 rounded-xl bg-cream-200 hover:bg-cream-300 text-brand-900 border border-cream-300 text-xs sm:text-sm font-semibold flex items-center gap-2 transition-colors">
+                <i data-lucide="file-down" class="w-4 h-4 text-brand-800"></i> Baixar PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- Mensagem Automática para o Responsável da Semana -->
+          <div class="bg-cream-50 rounded-2xl border border-cream-300 p-5 shadow-xs space-y-4">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="p-2 rounded-xl bg-emerald-100 text-emerald-800">
+                  <i data-lucide="message-square" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <h3 class="font-serif text-base font-bold text-brand-900">Aviso Automático — Responsável da Semana</h3>
+                  <p class="text-xs text-slate-500">Mensagem gerada automaticamente conforme os irmãos escalados no Som / Áudio esta semana.</p>
+                </div>
+              </div>
+            </div>
+
+            ${weeklyResponsibles.length === 0 ? `
+              <p class="text-xs text-slate-500 bg-white p-4 rounded-xl border border-cream-200">
+                Nenhum operador de Som / Áudio definido para as próximas reuniões. Clique em <strong>"Gerar Nova Escala (Som)"</strong> acima.
+              </p>
+            ` : `
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ${weeklyResponsibles.map(entry => {
+                  const autoMsg = `Olá, *${entry.brother.name}*! 👋\n\nPassando para lembrar da sua designação no *Áudio e Vídeo (Som)* nesta semana:\n📅 ${entry.dates.join(' e ')}\n\nPor favor, lembre-se de testar os microfones e o Zoom com 20 minutos de antecedência. Muito obrigado pelo apoio!`;
+                  const encodedMsg = encodeURIComponent(autoMsg);
+                  return `
+                    <div class="bg-white p-4 rounded-xl border border-cream-300 flex flex-col justify-between gap-3">
+                      <div>
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                          <span class="font-bold text-sm text-brand-900">${escapeHtml(entry.brother.name)}</span>
+                          <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-100 text-brand-800">${entry.dates.join(' · ')}</span>
+                        </div>
+                        <pre class="whitespace-pre-wrap font-sans text-xs text-slate-600 bg-cream-100/80 p-3 rounded-lg border border-cream-200 leading-relaxed">${escapeHtml(autoMsg)}</pre>
+                      </div>
+                      <div class="flex items-center justify-end gap-2 pt-1">
+                        <button onclick="copyWeeklyAudioMsg('${encodedMsg}')" class="px-3 py-1.5 rounded-lg bg-cream-200 hover:bg-cream-300 text-brand-900 text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                          <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar
+                        </button>
+                        <button onclick="sendWeeklyAudioWhatsApp('${escapeHtml(entry.brother.phone || '')}', '${encodedMsg}')" class="px-3.5 py-1.5 rounded-lg bg-brand-800 hover:bg-brand-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                          <i data-lucide="send" class="w-3.5 h-3.5"></i> Enviar WhatsApp
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </div>
+
+          <!-- Tabela Completa de Áudio e Vídeo -->
+          <div class="bg-cream-50 rounded-2xl border border-cream-300 shadow-xs overflow-hidden">
+            <div class="px-6 py-4 border-b border-cream-200 flex items-center justify-between">
+              <h3 class="font-serif text-lg font-bold text-brand-900">Escala Completa — Som / Áudio (${mesTitulo})</h3>
+              <button onclick="renderView('designacoes')" class="text-xs font-semibold text-brand-800 hover:underline">
+                Ver grade completa →
+              </button>
+            </div>
+            <div class="overflow-x-auto bg-white">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-cream-200/70 border-b border-cream-300 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <th class="py-3.5 px-6">Data</th>
+                    <th class="py-3.5 px-6">Dia</th>
+                    <th class="py-3.5 px-6">Operador de Som / Áudio</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-cream-200 text-sm">
+                  ${allDates.map(d => {
+                    const dateKey = d.toISOString().split('T')[0];
+                    const somId = state.schedule.grid[dateKey]?.['r5'];
+                    const som = state.brothers.find(b => b.id === somId);
+                    return `
+                      <tr class="hover:bg-cream-100/60">
+                        <td class="py-3.5 px-6 font-medium text-brand-900">${formatDateBR(dateKey)}</td>
+                        <td class="py-3.5 px-6 text-slate-500">${weekDays[d.getDay()]}</td>
+                        <td class="py-3.5 px-6 font-semibold text-brand-800">${som ? escapeHtml(som.name) : '<span class="text-rose-600">VAGO</span>'}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // =========================================================================
+    // 6. EVENTOS
+    // =========================================================================
+    function renderEventos() {
+      mainContent.innerHTML = `
+        <div class="space-y-6">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-widest text-amber-800/80 mb-1">PROGRAMAÇÃO ESPECIAL</p>
+            <h2 class="font-serif text-3xl font-bold text-brand-900">Eventos e Visitas</h2>
+            <p class="text-sm text-slate-500 mt-1">Calendário de eventos especiais da congregação e circuito.</p>
+          </div>
+
+          <div class="space-y-3">
+            ${state.cong.eventos.map(ev => `
+              <div class="bg-cream-50 p-5 rounded-2xl border ${ev.destaque ? 'border-l-4 border-l-brand-800 border-cream-300' : 'border-cream-300'} shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span class="text-xs font-bold text-brand-800 uppercase tracking-wider">${formatDateBR(ev.date)}</span>
+                  <h3 class="font-serif text-lg font-bold text-brand-900 mt-0.5">${ev.titulo}</h3>
+                  <p class="text-sm text-slate-500 mt-0.5">Local: ${ev.local}</p>
+                </div>
+                ${ev.destaque ? `<span class="self-start sm:self-center px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-900 border border-brand-200">Evento Especial</span>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // NAVEGAÇÃO MOBILE SIDEBAR & INICIALIZAÇÃO
+    // =========================================================================
+    const sidebar = document.getElementById('sidebar');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+
+    function openMobileSidebar() {
+      sidebar.classList.remove('-translate-x-full');
+      mobileOverlay.classList.remove('hidden');
+    }
+
+    function closeMobileSidebar() {
+      sidebar.classList.add('-translate-x-full');
+      mobileOverlay.classList.add('hidden');
+    }
+
+    document.getElementById('mobileMenuBtn').addEventListener('click', openMobileSidebar);
+    document.getElementById('closeSidebarBtn').addEventListener('click', closeMobileSidebar);
+    mobileOverlay.addEventListener('click', closeMobileSidebar);
+
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        renderView(btn.dataset.view);
+        closeMobileSidebar();
+      });
+    });
+
+    document.getElementById('resetDemoBtn').addEventListener('click', () => {
+      state.brothers = getDefaultBrothersList();
+      state.roles = [
+        { id: 'r1', name: 'INDICADOR ENTRADA' },
+        { id: 'r2', name: 'INDICADOR SALÃO' },
+        { id: 'r3', name: 'MICROFONE 1' },
+        { id: 'r4', name: 'MICROFONE 2' },
+        { id: 'r5', name: 'SOM / ÁUDIO' }
+      ];
+      state.cong = JSON.parse(JSON.stringify(DEFAULT_CONG_DATA));
+      saveCongState();
+      generateSchedule(true);
+      renderView(currentView);
+      showToast('Dados iniciais restaurados!', 'success');
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        loadPersistedState();
+        if (!state.schedule) {
+          generateSchedule(true);
+        }
+        renderView('dashboard');
+        if (window.lucide) lucide.createIcons();
+      } catch (err) {
+        console.error('Erro na inicialização:', err);
+      }
+    });
+  </script>
+</body>
+</html>
